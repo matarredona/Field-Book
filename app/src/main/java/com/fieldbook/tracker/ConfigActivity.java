@@ -54,6 +54,7 @@ import com.fieldbook.tracker.CSV.CSVReader;
 import com.fieldbook.tracker.CSV.CSVWriter;
 import com.fieldbook.tracker.Trait.TraitEditorActivity;
 import com.fieldbook.tracker.Tutorial.TutorialSettingsActivity;
+import com.fieldbook.tracker.Utilities.DialogHelper;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -1463,10 +1464,12 @@ public class ConfigActivity extends AppCompatActivity {
 
     private void showDataSyncDialog() {
 
-        View layout = getDialogView(R.layout.config);
-        dataSyncDialog = buildDialog(
-                getString(R.string.datasyncdialogtitle),
-                layout
+        DialogHelper dHelper = new DialogHelper();
+        View layout = dHelper.getDialogView(R.layout.config, ConfigActivity.this);
+        dataSyncDialog = dHelper.buildDialog(
+                getString(R.string.datasyncsettingsdialogtitle),
+                layout,
+                ConfigActivity.this
         );
 
         String[] array = prepareSyncList();
@@ -1522,10 +1525,12 @@ public class ConfigActivity extends AppCompatActivity {
 
     private void showSyncSettingDialog(final String setting, String title) {
 
-        View layout = getDialogView(R.layout.sync_setting);
-        final AlertDialog syncSettingDialog = buildDialog(
+        DialogHelper dHelper = new DialogHelper();
+        View layout = dHelper.getDialogView(R.layout.sync_setting, ConfigActivity.this);
+        final AlertDialog syncSettingDialog = dHelper.buildDialog(
                 title,
-                layout
+                layout,
+                ConfigActivity.this
         );
 
         final EditText syncSetting = (EditText) layout.findViewById(R.id.sync);
@@ -1553,30 +1558,6 @@ public class ConfigActivity extends AppCompatActivity {
             }
         });
         syncSettingDialog.show();
-    }
-
-    private View getDialogView(int layout) {
-
-        LayoutInflater inflater = this.getLayoutInflater();
-        View view = inflater.inflate(layout, null);
-
-        return view;
-    }
-
-    private AlertDialog buildDialog(String title, View view) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AppAlertDialog);
-
-        builder.setTitle(title)
-                .setCancelable(true)
-                .setView(view);
-
-        AlertDialog dialog = builder.create();
-
-        android.view.WindowManager.LayoutParams langParams = dialog.getWindow().getAttributes();
-        langParams.width = LayoutParams.MATCH_PARENT;
-        dialog.getWindow().setAttributes(langParams);
-
-        return dialog;
     }
 
     private void updateLanguage(String loc, String reg) {

@@ -36,5 +36,10 @@
             android:icon="@drawable/ic_translate"
             android:title="@string/language" />
 
+        <item
+            android:id="@+id/nav_sync"
+            android:icon="@drawable/ic_database"
+            android:title="@string/datasyncmenuitem" />
+
     </group>
 </menu>

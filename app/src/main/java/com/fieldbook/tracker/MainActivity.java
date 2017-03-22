@@ -80,6 +80,8 @@ import com.fieldbook.tracker.Barcodes.*;
 import com.fieldbook.tracker.Search.*;
 import com.fieldbook.tracker.Trait.*;
 import com.fieldbook.tracker.Tutorial.*;
+import com.fieldbook.tracker.Utilities.DialogHelper;
+import com.fieldbook.tracker.Utilities.SyncHelper;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -1630,10 +1632,51 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 f.putExtra("dialog", "language");
                 startActivity(f);
                 break;
+
+            case R.id.nav_sync:
+                showDataSyncDialog();
+                break;
         }
 
         mDrawer.closeDrawers();
     }
+
+    private void showDataSyncDialog() {
+
+        DialogHelper dHelper = new DialogHelper();
+        View layout = dHelper.getDialogView(R.layout.sync_perform, MainActivity.this);
+        final AlertDialog dataSyncDialog = dHelper.buildDialog(
+                getString(R.string.datasyncperformdialogtitle),
+                layout,
+                MainActivity.this
+        );
+
+        Button uploadButton = (Button) layout.findViewById(R.id.uploadDataBtn);
+        uploadButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View arg0) {
+                SyncHelper sHelper = new SyncHelper();
+                sHelper.performSyncUpload(dt);
+            }
+        });
+
+        Button downloadButton = (Button) layout.findViewById(R.id.downloadDataBtn);
+        downloadButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View arg0) {
+                SyncHelper sHelper = new SyncHelper();
+                sHelper.performSyncDownload(dt);
+            }
+        });
+
+        Button yesButton = (Button) layout.findViewById(R.id.okBtn);
+        yesButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View arg0) {
+                dataSyncDialog.dismiss();
+            }
+        });
+        dataSyncDialog.show();
+    }
+
+
 
     Runnable mActionRight = new Runnable() {
         @Override public void run() {

@@ -257,7 +257,8 @@
     <string name="getlocation">Get location</string>
 
     <!-- DataSync dialog -->
-    <string name="datasyncdialogtitle">REST Syncronization settings</string>
+    <!-- setup -->
+    <string name="datasyncsettingsdialogtitle">REST Syncronization settings</string>
 
     <string name="syncurlpreference">REST-URL</string>
     <string name="syncuserpreference">REST-User</string>
@@ -266,6 +267,11 @@
     <string name="syncurldialogtitle">Set REST URL</string>
     <string name="syncuserdialogtitle">Set REST user</string>
     <string name="syncpassdialogtitle">Set REST password</string>
+
+    <!-- perform -->
+    <string name="datasyncperformdialogtitle">Synchronize data</string>
+    <string name="syncupload">Upload data</string>
+    <string name="syncdownload">Download data</string>
 
     <!-- Database dialog -->
     <string name="dbbackup">Database</string>
