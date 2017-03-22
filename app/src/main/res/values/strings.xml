@@ -51,6 +51,7 @@
     <string name="export">Export</string>
     <string name="advanced">Advanced</string>
     <string name="language">Language</string>
+    <string name="datasyncmenuitem">Data Synchronization</string>
     <string name="updatemsg">Changelog</string>
 
     <string name="sampledata">Sample data</string>
@@ -254,6 +255,17 @@
     <string name="latitude">Latitude</string>
     <string name="longitude">Longitude</string>
     <string name="getlocation">Get location</string>
+
+    <!-- DataSync dialog -->
+    <string name="datasyncdialogtitle">REST Syncronization settings</string>
+
+    <string name="syncurlpreference">REST-URL</string>
+    <string name="syncuserpreference">REST-User</string>
+    <string name="syncpasspreference">REST-Password</string>
+
+    <string name="syncurldialogtitle">Set REST URL</string>
+    <string name="syncuserdialogtitle">Set REST user</string>
+    <string name="syncpassdialogtitle">Set REST password</string>
 
     <!-- Database dialog -->
     <string name="dbbackup">Database</string>

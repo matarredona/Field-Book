@@ -102,12 +102,13 @@ public class ConfigActivity extends AppCompatActivity {
     private AlertDialog setupDialog;
     private AlertDialog importFieldDialog;
     private AlertDialog dbSaveDialog;
-
+    private AlertDialog dataSyncDialog;
     private String[] importColumns;
 
     private String mChosenFile = "";
 
     private ListView setupList;
+    private ListView syncList;
 
     String versionName;
 
@@ -254,7 +255,7 @@ public class ConfigActivity extends AppCompatActivity {
 
         String[] items2 = new String[]{getString(R.string.fields),
                 getString(R.string.traits), getString(R.string.profile), getString(R.string.export), getString(R.string.advanced),
-                getString(R.string.language)};//, "API Test"}; TODO cleanup
+                getString(R.string.language), getString(R.string.datasyncmenuitem)};//, "API Test"}; TODO cleanup
 
         settingsList.setOnItemClickListener(new OnItemClickListener() {
             public void onItemClick(AdapterView<?> av, View arg1, int position, long arg3) {
@@ -297,6 +298,9 @@ public class ConfigActivity extends AppCompatActivity {
                         break;
                     case 5:
                         showLanguageDialog();
+                        break;
+                    case 6:
+                        showDataSyncDialog();
                         break;
                     /*case 6:
                         intent.setClassName(ConfigActivity.this,
@@ -1417,6 +1421,164 @@ public class ConfigActivity extends AppCompatActivity {
         languageDialog.show();
     }
 
+    private String[] prepareSyncList() {
+        String[] syncSettings = {
+                getString(R.string.syncurlpreference),
+                getString(R.string.syncuserpreference),
+                getString(R.string.syncpasspreference),
+                getString(R.string.clearsettings)
+        };
+
+        for (int i = 0; i < syncSettings.length; i++) {
+            String preparedSetting = "";
+            if (syncSettings[i] != getString(R.string.clearsettings)) {
+                if (ep.getString(syncSettings[i], "").length() > 0) {
+                    preparedSetting += syncSettings[i] + ": " + ep.getString(syncSettings[i], "");
+                } else {
+                    preparedSetting += syncSettings[i] + ": " + getString(R.string.none);
+                }
+                syncSettings[i] = preparedSetting;
+            }
+        }
+        return syncSettings;
+    }
+
+    private void updateSyncList() {
+        ArrayAdapter<String> ga = (ArrayAdapter) syncList.getAdapter();
+
+        if (ga != null) {
+            ga.clear();
+        }
+
+        String[] arrayData = prepareSyncList();
+
+        if (arrayData != null) {
+            for (String string : arrayData) {
+                ga.insert(string, ga.getCount());
+            }
+        }
+
+        ga.notifyDataSetChanged();
+    }
+
+    private void showDataSyncDialog() {
+
+        View layout = getDialogView(R.layout.config);
+        dataSyncDialog = buildDialog(
+                getString(R.string.datasyncdialogtitle),
+                layout
+        );
+
+        String[] array = prepareSyncList();
+        ArrayList<String> lst = new ArrayList<String>();
+        lst.addAll(Arrays.asList(array));
+
+        syncList = (ListView) layout.findViewById(R.id.myList);
+        Button setupCloseBtn = (Button) layout.findViewById(R.id.closeBtn);
+        setupCloseBtn.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
+                dataSyncDialog.dismiss();
+            }
+        });
+
+
+        syncList.setOnItemClickListener(new OnItemClickListener() {
+            public void onItemClick(AdapterView<?> av, View arg1, int which, long arg3) {
+                switch (which) {
+                    case 0:
+                        showSyncSettingDialog(
+                                getString(R.string.syncurlpreference),
+                                getString(R.string.syncurldialogtitle)
+                        );
+                        break;
+
+                    case 1:
+                        showSyncSettingDialog(
+                                getString(R.string.syncuserpreference),
+                                getString(R.string.syncuserdialogtitle)
+                        );
+                        break;
+
+                    case 2:
+                        showSyncSettingDialog(
+                                getString(R.string.syncpasspreference),
+                                getString(R.string.syncpassdialogtitle)
+                        );
+                        break;
+
+                    case 3:
+                        showClearSettingsDialog();
+                        break;
+
+                }
+            }
+        });
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.listitem, lst);
+
+        syncList.setAdapter(adapter);
+        dataSyncDialog.show();
+    }
+
+    private void showSyncSettingDialog(final String setting, String title) {
+
+        View layout = getDialogView(R.layout.sync_setting);
+        final AlertDialog syncSettingDialog = buildDialog(
+                title,
+                layout
+        );
+
+        final EditText syncSetting = (EditText) layout.findViewById(R.id.sync);
+        syncSetting.setHint(setting);
+
+        syncSetting.setText(ep.getString(setting,""));
+
+        syncSetting.setSelectAllOnFocus(true);
+
+        Button yesButton = (Button) layout.findViewById(R.id.saveBtn);
+
+        yesButton.setOnClickListener(new OnClickListener() {
+
+            public void onClick(View arg0) {
+                Editor e = ep.edit();
+
+                e.putString(setting, syncSetting.getText().toString());
+                e.apply();
+
+                if (dataSyncDialog.isShowing()) {
+                    updateSyncList();
+                }
+
+                syncSettingDialog.dismiss();
+            }
+        });
+        syncSettingDialog.show();
+    }
+
+    private View getDialogView(int layout) {
+
+        LayoutInflater inflater = this.getLayoutInflater();
+        View view = inflater.inflate(layout, null);
+
+        return view;
+    }
+
+    private AlertDialog buildDialog(String title, View view) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AppAlertDialog);
+
+        builder.setTitle(title)
+                .setCancelable(true)
+                .setView(view);
+
+        AlertDialog dialog = builder.create();
+
+        android.view.WindowManager.LayoutParams langParams = dialog.getWindow().getAttributes();
+        langParams.width = LayoutParams.MATCH_PARENT;
+        dialog.getWindow().setAttributes(langParams);
+
+        return dialog;
+    }
+
     private void updateLanguage(String loc, String reg) {
         Locale locale2 = new Locale(loc, reg);
         Locale.setDefault(locale2);
@@ -2236,6 +2398,10 @@ public class ConfigActivity extends AppCompatActivity {
 
             if (dialog.equals("language")) {
                 showLanguageDialog();
+            }
+
+            if (dialog.equals("datasync")) {
+                showDataSyncDialog();
             }
         }
     }
