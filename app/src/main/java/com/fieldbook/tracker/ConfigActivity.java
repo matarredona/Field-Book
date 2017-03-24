@@ -1465,7 +1465,7 @@ public class ConfigActivity extends AppCompatActivity {
     private void showDataSyncDialog() {
 
         DialogHelper dHelper = new DialogHelper();
-        View layout = dHelper.getDialogView(R.layout.config, ConfigActivity.this);
+        View layout = dHelper.getDialogView(R.layout.sync_settings, ConfigActivity.this);
         dataSyncDialog = dHelper.buildDialog(
                 getString(R.string.datasyncsettingsdialogtitle),
                 layout,
@@ -1476,15 +1476,28 @@ public class ConfigActivity extends AppCompatActivity {
         ArrayList<String> lst = new ArrayList<String>();
         lst.addAll(Arrays.asList(array));
 
-        syncList = (ListView) layout.findViewById(R.id.myList);
+        onlyUnique = (RadioButton) layout.findViewById(R.id.onlyUnique);
+        activeTraits = (RadioButton) layout.findViewById(R.id.activeTraits);
         Button setupCloseBtn = (Button) layout.findViewById(R.id.closeBtn);
         setupCloseBtn.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
+                Editor e = ep.edit();
+                if (onlyUnique.isChecked()) {
+                    e.putBoolean(getString(R.string.synconlyuniquepreference), true);
+                } else {
+                    e.putBoolean(getString(R.string.synconlyuniquepreference), false);
+                }
+                if (activeTraits.isChecked()) {
+                    e.putBoolean(getString(R.string.synconlyactivepreference), true);
+                } else {
+                    e.putBoolean(getString(R.string.synconlyactivepreference), false);
+                }
+                e.apply();
                 dataSyncDialog.dismiss();
             }
         });
 
-
+        syncList = (ListView) layout.findViewById(R.id.myList);
         syncList.setOnItemClickListener(new OnItemClickListener() {
             public void onItemClick(AdapterView<?> av, View arg1, int which, long arg3) {
                 switch (which) {

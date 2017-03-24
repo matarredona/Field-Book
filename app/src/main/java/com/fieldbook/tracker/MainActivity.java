@@ -66,6 +66,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
+import android.widget.RadioButton;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
@@ -1654,16 +1655,16 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         Button uploadButton = (Button) layout.findViewById(R.id.uploadDataBtn);
         uploadButton.setOnClickListener(new OnClickListener() {
             public void onClick(View arg0) {
-                SyncHelper sHelper = new SyncHelper();
-                sHelper.performSyncUpload(dt);
+                SyncHelper sHelper = new SyncHelper(getApplicationContext(), ep, dt);
+                sHelper.performSyncUpload();
             }
         });
 
         Button downloadButton = (Button) layout.findViewById(R.id.downloadDataBtn);
         downloadButton.setOnClickListener(new OnClickListener() {
             public void onClick(View arg0) {
-                SyncHelper sHelper = new SyncHelper();
-                sHelper.performSyncDownload(dt);
+                SyncHelper sHelper = new SyncHelper(getApplicationContext(), ep, dt);
+                sHelper.performSyncDownload();
             }
         });
 
@@ -1675,7 +1676,6 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         });
         dataSyncDialog.show();
     }
-
 
 
     Runnable mActionRight = new Runnable() {

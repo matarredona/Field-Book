@@ -256,22 +256,36 @@
     <string name="longitude">Longitude</string>
     <string name="getlocation">Get location</string>
 
-    <!-- DataSync dialog -->
-    <!-- setup -->
+    <!-- DataSync -->
+    <!-- setup dialog -->
     <string name="datasyncsettingsdialogtitle">REST Syncronization settings</string>
 
     <string name="syncurlpreference">REST-URL</string>
     <string name="syncuserpreference">REST-User</string>
     <string name="syncpasspreference">REST-Password</string>
+    <string name="syncdownloadpreference">REST-downloadpath</string>
+    <string name="syncuploadpathpreference">REST-uploadpath</string>
+    <string name="syncautenticationpathpreference">REST-authpath</string>
+    <string name="synchttpspreference">REST-Scheme</string>
+    <string name="synconlyuniquepreference">REST-OnlyUnique</string>
+    <string name="synconlyactivepreference">REST-OnlyActive</string>
+    <string name="uniquenamepreference">ImportUniqueName</string>
+    <string name="https">https</string>
+    <string name="http">http</string>
 
     <string name="syncurldialogtitle">Set REST URL</string>
     <string name="syncuserdialogtitle">Set REST user</string>
     <string name="syncpassdialogtitle">Set REST password</string>
 
-    <!-- perform -->
+    <!-- perform dialog -->
     <string name="datasyncperformdialogtitle">Synchronize data</string>
     <string name="syncupload">Upload data</string>
     <string name="syncdownload">Download data</string>
+
+    <!-- notifications -->
+    <string name="malformedresturl">Invalid REST URL (check sync settings)</string>
+    <string name="restautenticationfailed">Authentication failed (check sync settings)</string>
+    <string name="restconnectionfailed">Connection to REST failed</string>
 
     <!-- Database dialog -->
     <string name="dbbackup">Database</string>
