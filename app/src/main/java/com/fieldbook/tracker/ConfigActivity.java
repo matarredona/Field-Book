@@ -1476,8 +1476,8 @@ public class ConfigActivity extends AppCompatActivity {
         ArrayList<String> lst = new ArrayList<String>();
         lst.addAll(Arrays.asList(array));
 
-        onlyUnique = (RadioButton) layout.findViewById(R.id.onlyUnique);
-        activeTraits = (RadioButton) layout.findViewById(R.id.activeTraits);
+        onlyUnique = (RadioButton) layout.findViewById(R.id.syncOnlyUnique);
+        activeTraits = (RadioButton) layout.findViewById(R.id.syncActiveTraits);
         Button setupCloseBtn = (Button) layout.findViewById(R.id.closeBtn);
         setupCloseBtn.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
