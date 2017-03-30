@@ -56,6 +56,7 @@ public class DataHelper {
     private SQLiteStatement insertTraits;
     private SQLiteStatement insertUserTraits;
     private SQLiteStatement insertUserTraitsFromRemoteOrigin;
+    private SQLiteStatement updateUserTraitsFromRemoteOrigin;
 
     private static final String INSERTTRAITS = "insert into "
             + TRAITS
@@ -66,11 +67,12 @@ public class DataHelper {
             + "(rid, parent, trait, userValue, timeTaken, person, location, rep, notes, exp_id) values (?,?,?,?,?,?,?,?,?,?)";
 
     private static final String INSERT_USER_TRAITS_FROM_REMOTE_ORIGIN = "INSERT INTO " + USER_TRAITS
-            + "(rid, parent, trait, userValue, timeTaken, person, location, rep, notes, exp_id) " +
-            "select ?,?,?,?,?,?,?,?,?,? " +
-            "WHERE (SELECT timeTaken FROM " + USER_TRAITS +
-            " WHERE rid = ? AND trait = ?) " +
-            "< ?";
+            + " (rid, parent, trait, userValue, timeTaken, person, location, rep, notes, exp_id) values (?,?,?,?,?,?,?,?,?,?)";
+
+    private static final String UPDATE_USER_TRAITS_FROM_REMOTE_ORIGIN = "UPDATE " + USER_TRAITS
+            + " SET rid = ?, parent = ?, trait = ?, userValue = ?, timeTaken = ?, person = ?, location = ?, rep = ?, notes = ?, exp_id = ? "
+            + "WHERE rid = ? AND trait = ?";
+
 
     private SimpleDateFormat timeStamp;
 
@@ -89,6 +91,7 @@ public class DataHelper {
             this.insertTraits = db.compileStatement(INSERTTRAITS);
             this.insertUserTraits = db.compileStatement(INSERTUSERTRAITS);
             this.insertUserTraitsFromRemoteOrigin = db.compileStatement(INSERT_USER_TRAITS_FROM_REMOTE_ORIGIN);
+            this.updateUserTraitsFromRemoteOrigin = db.compileStatement(UPDATE_USER_TRAITS_FROM_REMOTE_ORIGIN);
 
             timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ",
                     Locale.getDefault());
@@ -188,11 +191,31 @@ public class DataHelper {
             this.insertUserTraitsFromRemoteOrigin.bindString(8, rep);
             this.insertUserTraitsFromRemoteOrigin.bindString(9, notes);
             this.insertUserTraitsFromRemoteOrigin.bindString(10, exp_id);
-            this.insertUserTraitsFromRemoteOrigin.bindString(11, rid);
-            this.insertUserTraitsFromRemoteOrigin.bindString(12, trait);
-            this.insertUserTraitsFromRemoteOrigin.bindString(13, timeTaken);
 
             return this.insertUserTraitsFromRemoteOrigin.executeInsert();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    public long updateUserTraitsFromRemoteOrigin(String rid, String parent, String trait, String userValue, String timeTaken, String person, String location, String rep, String notes, String exp_id) {
+
+        try {
+            this.updateUserTraitsFromRemoteOrigin.bindString(1, rid);
+            this.updateUserTraitsFromRemoteOrigin.bindString(2, parent);
+            this.updateUserTraitsFromRemoteOrigin.bindString(3, trait);
+            this.updateUserTraitsFromRemoteOrigin.bindString(4, userValue);
+            this.updateUserTraitsFromRemoteOrigin.bindString(5, timeTaken);
+            this.updateUserTraitsFromRemoteOrigin.bindString(6, person);
+            this.updateUserTraitsFromRemoteOrigin.bindString(7, location);
+            this.updateUserTraitsFromRemoteOrigin.bindString(8, rep);
+            this.updateUserTraitsFromRemoteOrigin.bindString(9, notes);
+            this.updateUserTraitsFromRemoteOrigin.bindString(10, exp_id);
+            this.updateUserTraitsFromRemoteOrigin.bindString(11, rid);
+            this.updateUserTraitsFromRemoteOrigin.bindString(12, trait);
+
+            return this.updateUserTraitsFromRemoteOrigin.executeUpdateDelete();
         } catch (Exception e) {
             e.printStackTrace();
             return -1;
@@ -777,6 +800,13 @@ public class DataHelper {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public Cursor getUserTraitsRegister(String rid, String trait) {
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM " + USER_TRAITS + " WHERE rid = " + rid + " AND trait = " + trait,
+                null);
+        return cursor;
     }
 
     /**

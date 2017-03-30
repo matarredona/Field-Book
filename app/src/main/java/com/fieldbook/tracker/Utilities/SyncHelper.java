@@ -250,18 +250,38 @@ public class SyncHelper {
                 for (int i = 0; i < data.length(); i++) {
                     JSONObject register = data.getJSONObject(i);
                     String[] registerValues = getRegisterValues(register, columnNames);
-                    dataBase.insertUserTraitsFromRemoteOrigin(
-                            registerValues[0],
-                            registerValues[1],
-                            registerValues[2],
-                            registerValues[3],
-                            registerValues[4],
-                            registerValues[5],
-                            registerValues[6],
-                            registerValues[7],
-                            registerValues[8],
-                            registerValues[9]
-                    );
+                    String rid = registerValues[1];
+                    String trait = registerValues[3];
+                    Cursor localRegister = dataBase.getUserTraitsRegister(rid, trait);
+                    //insert register if it's not present in local database
+                    if (localRegister.getCount() == 0) {
+                        dataBase.insertUserTraitsFromRemoteOrigin(
+                                registerValues[1],
+                                registerValues[2],
+                                registerValues[3],
+                                registerValues[4],
+                                registerValues[5],
+                                registerValues[6],
+                                registerValues[7],
+                                registerValues[8],
+                                registerValues[9],
+                                registerValues[10]
+                        );
+                    //update register if it's present with a previous date
+                    } else if (localRegister.getString(5).compareTo(registerValues[5]) < 0) {
+                        dataBase.updateUserTraitsFromRemoteOrigin(
+                                registerValues[1],
+                                registerValues[2],
+                                registerValues[3],
+                                registerValues[4],
+                                registerValues[5],
+                                registerValues[6],
+                                registerValues[7],
+                                registerValues[8],
+                                registerValues[9],
+                                registerValues[10]
+                        );
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
