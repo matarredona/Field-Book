@@ -64,11 +64,11 @@ public class SyncHelper {
         this.onlyUnique = sharedPreferences.getBoolean(context.getString(R.string.synconlyuniquepreference), true);
         this.onlyActive = sharedPreferences.getBoolean(context.getString(R.string.synconlyactivepreference), true);
         this.importUniqueName = sharedPreferences.getString(context.getString(R.string.uniquenamepreference), "");
+        CookieManager cookieManager = new CookieManager();
+        CookieHandler.setDefault(cookieManager);
     }
 
     public void performSyncUpload() {
-        CookieManager cookieManager = new CookieManager();
-        CookieHandler.setDefault(cookieManager);
         if (authenticate()) {
             Cursor data = getLocalData();
             String[] columnNames = data.getColumnNames();
@@ -215,18 +215,6 @@ public class SyncHelper {
         return registerValues;
     }
 
-    private void insertRegisterValues(String[] registerValues) {
-        String rid = registerValues[0];
-        String parent = registerValues[1];
-        String trait = registerValues[2];
-        String userValue = registerValues[3];
-        String person = registerValues[4];
-        String location = registerValues[5];
-        String notes = registerValues[6];
-        String exp_id = registerValues[7];
-        dataBase.insertUserTraits(rid, parent, trait, userValue, person, location, notes, exp_id);
-    }
-
     private void showToast(String text) {
         Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
     }
@@ -262,7 +250,18 @@ public class SyncHelper {
                 for (int i = 0; i < data.length(); i++) {
                     JSONObject register = data.getJSONObject(i);
                     String[] registerValues = getRegisterValues(register, columnNames);
-                    insertRegisterValues(registerValues);
+                    dataBase.insertUserTraitsFromRemoteOrigin(
+                            registerValues[0],
+                            registerValues[1],
+                            registerValues[2],
+                            registerValues[3],
+                            registerValues[4],
+                            registerValues[5],
+                            registerValues[6],
+                            registerValues[7],
+                            registerValues[8],
+                            registerValues[9]
+                    );
                 }
             } catch (Exception e) {
                 e.printStackTrace();

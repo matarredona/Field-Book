@@ -1655,7 +1655,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         Button uploadButton = (Button) layout.findViewById(R.id.uploadDataBtn);
         uploadButton.setOnClickListener(new OnClickListener() {
             public void onClick(View arg0) {
-                SyncHelper sHelper = new SyncHelper(getApplicationContext(), ep, dt);
+                SyncHelper sHelper = new SyncHelper(MainActivity.this, ep, dt);
                 sHelper.performSyncUpload();
             }
         });
@@ -1663,7 +1663,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         Button downloadButton = (Button) layout.findViewById(R.id.downloadDataBtn);
         downloadButton.setOnClickListener(new OnClickListener() {
             public void onClick(View arg0) {
-                SyncHelper sHelper = new SyncHelper(getApplicationContext(), ep, dt);
+                SyncHelper sHelper = new SyncHelper(MainActivity.this, ep, dt);
                 sHelper.performSyncDownload();
             }
         });

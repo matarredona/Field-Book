@@ -55,6 +55,7 @@ public class DataHelper {
 
     private SQLiteStatement insertTraits;
     private SQLiteStatement insertUserTraits;
+    private SQLiteStatement insertUserTraitsFromRemoteOrigin;
 
     private static final String INSERTTRAITS = "insert into "
             + TRAITS
@@ -63,6 +64,13 @@ public class DataHelper {
 
     private static final String INSERTUSERTRAITS = "insert into " + USER_TRAITS
             + "(rid, parent, trait, userValue, timeTaken, person, location, rep, notes, exp_id) values (?,?,?,?,?,?,?,?,?,?)";
+
+    private static final String INSERT_USER_TRAITS_FROM_REMOTE_ORIGIN = "INSERT INTO " + USER_TRAITS
+            + "(rid, parent, trait, userValue, timeTaken, person, location, rep, notes, exp_id) " +
+            "select ?,?,?,?,?,?,?,?,?,? " +
+            "WHERE (SELECT timeTaken FROM " + USER_TRAITS +
+            " WHERE rid = ? AND trait = ?) " +
+            "< ?";
 
     private SimpleDateFormat timeStamp;
 
@@ -80,6 +88,7 @@ public class DataHelper {
 
             this.insertTraits = db.compileStatement(INSERTTRAITS);
             this.insertUserTraits = db.compileStatement(INSERTUSERTRAITS);
+            this.insertUserTraitsFromRemoteOrigin = db.compileStatement(INSERT_USER_TRAITS_FROM_REMOTE_ORIGIN);
 
             timeStamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ",
                     Locale.getDefault());
@@ -156,6 +165,34 @@ public class DataHelper {
             this.insertUserTraits.bindString(10, exp_id);
 
             return this.insertUserTraits.executeInsert();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    /**
+     * Remote database entries are inserted if they aren't already present
+     * and if they are more recent
+     */
+    public long insertUserTraitsFromRemoteOrigin(String rid, String parent, String trait, String userValue, String timeTaken, String person, String location, String rep, String notes, String exp_id) {
+
+        try {
+            this.insertUserTraitsFromRemoteOrigin.bindString(1, rid);
+            this.insertUserTraitsFromRemoteOrigin.bindString(2, parent);
+            this.insertUserTraitsFromRemoteOrigin.bindString(3, trait);
+            this.insertUserTraitsFromRemoteOrigin.bindString(4, userValue);
+            this.insertUserTraitsFromRemoteOrigin.bindString(5, timeTaken);
+            this.insertUserTraitsFromRemoteOrigin.bindString(6, person);
+            this.insertUserTraitsFromRemoteOrigin.bindString(7, location);
+            this.insertUserTraitsFromRemoteOrigin.bindString(8, rep);
+            this.insertUserTraitsFromRemoteOrigin.bindString(9, notes);
+            this.insertUserTraitsFromRemoteOrigin.bindString(10, exp_id);
+            this.insertUserTraitsFromRemoteOrigin.bindString(11, rid);
+            this.insertUserTraitsFromRemoteOrigin.bindString(12, trait);
+            this.insertUserTraitsFromRemoteOrigin.bindString(13, timeTaken);
+
+            return this.insertUserTraitsFromRemoteOrigin.executeInsert();
         } catch (Exception e) {
             e.printStackTrace();
             return -1;

@@ -1477,7 +1477,20 @@ public class ConfigActivity extends AppCompatActivity {
         lst.addAll(Arrays.asList(array));
 
         onlyUnique = (RadioButton) layout.findViewById(R.id.syncOnlyUnique);
+        allColumns = (RadioButton) layout.findViewById(R.id.syncAllColumns);
+        if (ep.getBoolean(getResources().getString(R.string.synconlyuniquepreference), true) == true) {
+            onlyUnique.setChecked(true);
+        } else {
+            allColumns.setChecked(true);
+        }
         activeTraits = (RadioButton) layout.findViewById(R.id.syncActiveTraits);
+        allTraits = (RadioButton) layout.findViewById(R.id.syncAllTraits);
+        if (ep.getBoolean(getResources().getString(R.string.synconlyactivepreference), true) == true) {
+            activeTraits.setChecked(true);
+        } else {
+            allTraits.setChecked(true);
+        }
+
         Button setupCloseBtn = (Button) layout.findViewById(R.id.closeBtn);
         setupCloseBtn.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
@@ -1507,31 +1520,26 @@ public class ConfigActivity extends AppCompatActivity {
                                 getString(R.string.syncurldialogtitle)
                         );
                         break;
-
                     case 1:
                         showSyncSettingDialog(
                                 getString(R.string.syncuserpreference),
                                 getString(R.string.syncuserdialogtitle)
                         );
                         break;
-
                     case 2:
                         showSyncSettingDialog(
                                 getString(R.string.syncpasspreference),
                                 getString(R.string.syncpassdialogtitle)
                         );
                         break;
-
                     case 3:
                         showClearSettingsDialog();
                         break;
-
                 }
             }
         });
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.listitem, lst);
-
         syncList.setAdapter(adapter);
         dataSyncDialog.show();
     }
@@ -1548,25 +1556,19 @@ public class ConfigActivity extends AppCompatActivity {
 
         final EditText syncSetting = (EditText) layout.findViewById(R.id.sync);
         syncSetting.setHint(setting);
-
         syncSetting.setText(ep.getString(setting,""));
-
         syncSetting.setSelectAllOnFocus(true);
 
         Button yesButton = (Button) layout.findViewById(R.id.saveBtn);
-
         yesButton.setOnClickListener(new OnClickListener() {
 
             public void onClick(View arg0) {
                 Editor e = ep.edit();
-
                 e.putString(setting, syncSetting.getText().toString());
                 e.apply();
-
                 if (dataSyncDialog.isShowing()) {
                     updateSyncList();
                 }
-
                 syncSettingDialog.dismiss();
             }
         });
