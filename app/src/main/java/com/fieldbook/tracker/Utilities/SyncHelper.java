@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -15,17 +17,29 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
+import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by matarredona on 22/03/17.
@@ -37,96 +51,130 @@ public class SyncHelper {
     private DataHelper dataBase;
     private String restUrl;
     private String restUser;
+    //private String basicAuthCredentials;
     private String restPassword;
     private boolean onlyUnique;
     private boolean onlyActive;
     private String importUniqueName;
     private String scheme;
+    private ArrayList<String> API_PATH;
+    private CookieManager cookieManager;
 
-    private final String PARAMETER_NAME_USER = "user";
-    private final String PARAMETER_NAME_PASSWORD = "pass";
-    private final String PARAMETER_NAME_OPERATION = "op";
-    private final String PARAMETER_NAME_DATA = "data";
-    private final String OPERATION_PARAMETER_VALUE_AUTHENTICATION = "auth";
-    private final String OPERATION_PARAMETER_VALUE_UPLOAD = "up";
-    private final String OPERATION_PARAMETER_VALUE_DOWNLOAD = "down";
-    private final String JSON_DATA_KEY = "down";
+    private static final String PARAMETER_NAME_USER = "user";
+    private static final String PARAMETER_NAME_PASSWORD = "pass";
+    private static final String PARAMETER_NAME_OPERATION = "op";
+    private static final String PARAMETER_NAME_DATA = "data";
+    private static final String PARAMETER_NAME_FORMAT = "format";
+    private static final String PARAMETER_VALUE_JSON = "json";
+    //    private static final String OPERATION_PARAMETER_VALUE_AUTHENTICATION = "auth";
+    private static final String OPERATION_PARAMETER_VALUE_UPLOAD = "up";
+    private static final String OPERATION_PARAMETER_VALUE_DOWNLOAD = "down";
+    private static final String JSON_DATA_KEY = "down";
+    private static final String COOKIE_NAME_TOKEN = "csrftoken";
+    private static final String COOKIE_NAME_SESSION = "sessionid";
 
-    private final int CONNECTION_TIMEOUT = 5000;
-    private final int DATARETRIEVAL_TIMEOUT = 5000;
+    private static final List<String> PATH_LOGIN = Arrays.asList(
+            "login"
+    );
+    private static final List<String> PATH_AUTH = Arrays.asList(
+            "api-auth",
+            "login"
+    );
+    private static final List<String> PATH_PLANTS = Arrays.asList(
+            "api",
+            "plants"
+    );
+
+    private static final int RID = 1;
+    private static final int PARENT = 2;
+    private static final int TRAIT = 3;
+    private static final int USERVALUE = 4;
+    private static final int TIMETAKEN = 5;
+    private static final int PERSON = 6;
+    private static final int LOCATION = 7;
+    private static final int REP = 8;
+    private static final int NOTES = 9;
+    private static final int EXP_ID = 10;
+
+    private static final int CONNECTION_TIMEOUT = 5000;
+    private static final int DATARETRIEVAL_TIMEOUT = 5000;
 
     public SyncHelper(Context context, SharedPreferences sharedPreferences, DataHelper database) {
         this.context = context;
         this.dataBase = database;
-        this.restUrl = getURL(sharedPreferences);
+        setRestPath(sharedPreferences);
+        //this.basicAuthCredentials = getCredentialsForBasicAuth(sharedPreferences);
         this.restUser = sharedPreferences.getString(context.getString(R.string.syncuserpreference), "");
         this.restPassword = sharedPreferences.getString(context.getString(R.string.syncpasspreference), "");
         this.onlyUnique = sharedPreferences.getBoolean(context.getString(R.string.synconlyuniquepreference), true);
         this.onlyActive = sharedPreferences.getBoolean(context.getString(R.string.synconlyactivepreference), true);
         this.importUniqueName = sharedPreferences.getString(context.getString(R.string.uniquenamepreference), "");
-        CookieManager cookieManager = new CookieManager();
-        CookieHandler.setDefault(cookieManager);
+        this.cookieManager = new CookieManager();
+//        CookieHandler.setDefault(cookieManager);
     }
 
     public void performSyncUpload() {
-        if (authenticate()) {
-            Cursor data = getLocalData();
-            String[] columnNames = data.getColumnNames();
-            HashMap<String, String> uploadParameters = new HashMap<>();
-            uploadParameters.put(PARAMETER_NAME_OPERATION, OPERATION_PARAMETER_VALUE_UPLOAD);
-            while (data.moveToNext()) {
-                JSONObject json = new JSONObject();
-                for (String column : columnNames) {
-                    try {
-                        json.put(column, data.getString(data.getColumnIndex(column)));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+        AuthenticationTask authenticationTask = new AuthenticationTask();
+        try {
+            if (authenticationTask.execute().get() == 1) {
+                Cursor data = getLocalData();
+                String[] columnNames = data.getColumnNames();
+                HashMap<String, String> uploadParameters = new HashMap<>();
+                uploadParameters.put(PARAMETER_NAME_OPERATION, OPERATION_PARAMETER_VALUE_UPLOAD);
+                while (data.moveToNext()) {
+                    JSONObject json = new JSONObject();
+                    for (String column : columnNames) {
+                        try {
+                            json.put(column, data.getString(data.getColumnIndex(column)));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
+                    uploadParameters.put(PARAMETER_NAME_DATA, json.toString());
+                    URL url = makeURL(PATH_PLANTS, uploadParameters);
+                    SyncUploadTask uploadTask = new SyncUploadTask();
+                    uploadTask.execute(url);
                 }
-                uploadParameters.put(PARAMETER_NAME_DATA, json.toString());
-                URL url = makeURL(uploadParameters);
-                SyncUploadTask uploadTask = new SyncUploadTask();
-                uploadTask.doInBackground(url);
+                data.close();
+            } else {
+                showToast(context.getString(R.string.restautenticationfailed));
             }
-            data.close();
-        } else {
-            showToast(context.getString(R.string.restautenticationfailed));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     public void performSyncDownload() {
-        if (authenticate()) {
-            HashMap<String, String> downloadParameters = new HashMap<>();
-            downloadParameters.put(PARAMETER_NAME_OPERATION, OPERATION_PARAMETER_VALUE_DOWNLOAD);
-            URL url = makeURL(downloadParameters);
-            SyncDownloadTask downloadTask = new SyncDownloadTask();
-            downloadTask.doInBackground(url);
-        } else {
-            showToast(context.getString(R.string.restautenticationfailed));
-        }
-    }
-
-    private boolean authenticate() {
+        AuthenticationTask authenticationTask = new AuthenticationTask();
         try {
-            HashMap<String, String> authenticationParameters = new HashMap<>();
-            authenticationParameters.put(PARAMETER_NAME_OPERATION, OPERATION_PARAMETER_VALUE_AUTHENTICATION);
-            authenticationParameters.put(PARAMETER_NAME_USER, restUser);
-            authenticationParameters.put(PARAMETER_NAME_PASSWORD, restPassword);
-            URL url = makeURL(authenticationParameters);
-            HttpURLConnection connection = getConnection(url, "GET");
-            connection.connect();
-            connection.disconnect();
-            return true;
+            if (authenticationTask.execute().get() == 1) {
+                HashMap<String, String> downloadParameters = new HashMap<>();
+                downloadParameters.put(PARAMETER_NAME_FORMAT, PARAMETER_VALUE_JSON);
+                URL url = makeURL(PATH_PLANTS, downloadParameters);
+                SyncDownloadTask downloadTask = new SyncDownloadTask();
+                downloadTask.execute(url);
+            } else {
+                showToast(context.getString(R.string.restautenticationfailed));
+            }
         } catch (Exception e) {
-            return false;
+            e.printStackTrace();
         }
     }
 
-    private URL makeURL(HashMap<String, String> parameters) {
+    private URL makeURL(List<String> path, HashMap<String, String> parameters) {
         Uri.Builder builder = new Uri.Builder();
         builder.scheme(scheme).authority(restUrl);
-        for (Map.Entry<String, String> entry : parameters.entrySet()) {
-            builder.appendQueryParameter(entry.getKey(), entry.getValue());
+        ArrayList<String> fullPath = new ArrayList<String>(API_PATH);
+        fullPath.addAll(path);
+        if (fullPath != null) {
+            for (String p : fullPath) {
+                builder.appendPath(p);
+            }
+        }
+        if (parameters != null) {
+            for (Map.Entry<String, String> entry : parameters.entrySet()) {
+                builder.appendQueryParameter(entry.getKey(), entry.getValue());
+            }
         }
         URL url = null;
         try {
@@ -144,10 +192,83 @@ public class SyncHelper {
             connection.setConnectTimeout(CONNECTION_TIMEOUT);
             connection.setReadTimeout(DATARETRIEVAL_TIMEOUT);
             connection.setRequestMethod(requestMethod);
+            connection.setDoInput(true);
+            connection.setDoOutput(true);
         } catch (IOException e) {
             e.printStackTrace();
         }
         return connection;
+    }
+
+    private void setConnectionParameters(HttpURLConnection connection, HashMap<String, String> parameters) {
+        try {
+            OutputStreamWriter os = new OutputStreamWriter(connection.getOutputStream());
+            BufferedWriter writer = new BufferedWriter(os);
+            writer.write(getParametersString(parameters));
+            writer.flush();
+            writer.close();
+            os.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getParametersString(HashMap<String, String> parameters) {
+        StringBuilder result = new StringBuilder();
+        boolean first = true;
+        for (Map.Entry<String, String> entry : parameters.entrySet()) {
+            if (first) {
+                first = false;
+            } else {
+                result.append("&");
+            }
+            try {
+                result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+                result.append("=");
+                result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+        return result.toString();
+    }
+
+    private String getConnectionContent(HttpURLConnection connection) {
+        String content = "";
+        try {
+            InputStreamReader in = new InputStreamReader(connection.getInputStream());
+            BufferedReader reader = new BufferedReader(in);
+            String line = reader.readLine();
+            while (line != null) {
+                content += line;
+                line = reader.readLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return content;
+    }
+
+    private String getCookie(HttpURLConnection connection, String cookieName) throws IOException {
+        List<String> cookies = connection.getHeaderFields().get("Set-Cookie");
+        String cookieValue = "";
+        if (cookies != null) {
+            for (String cookie : cookies) {
+                if (cookie.startsWith(cookieName)) {
+                    cookieValue = cookie.split("=")[1].split(";")[0];
+                    cookieManager.getCookieStore().add(null, HttpCookie.parse(cookie).get(0));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    private void loadCookie(HttpURLConnection connection, String cookieName) {
+        connection.setRequestProperty(
+                "cookie",
+                TextUtils.join(";", cookieManager.getCookieStore().getCookies())
+        );
     }
 
     private Cursor getLocalData() {
@@ -176,7 +297,7 @@ public class SyncHelper {
 
     }
 
-    private String getURL(SharedPreferences sharedPreferences) {
+    private void setRestPath(SharedPreferences sharedPreferences) {
         String url = sharedPreferences.getString(context.getString(R.string.syncurlpreference), "");
         this.scheme = "https";
         if (url.startsWith("https")) {
@@ -185,7 +306,25 @@ public class SyncHelper {
             url = url.split("//")[1];
             this.scheme = "http";
         }
-        return url;
+        String[] path = url.split("/");
+        this.restUrl = path[0];
+        this.API_PATH = new ArrayList<String>();
+        for (int i = 1; i < path.length; i++) {
+            if (!path[i].equals("")) {
+                this.API_PATH.add(path[i]);
+            }
+        }
+    }
+
+    private String getCredentialsForBasicAuth(SharedPreferences sharedPreferences) {
+        String user = sharedPreferences.getString(context.getString(R.string.syncuserpreference), "");
+        String password = sharedPreferences.getString(context.getString(R.string.syncpasspreference), "");
+        String credentials = user + ":" + password;
+        String basicAuthCredentials = "Basic " + Base64.encodeToString(
+                credentials.getBytes(),
+                Base64.NO_WRAP
+        );
+        return basicAuthCredentials;
     }
 
     private String[] getResponseColumnNames(JSONArray data) throws JSONException {
@@ -219,11 +358,44 @@ public class SyncHelper {
         Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
     }
 
+    private class AuthenticationTask extends AsyncTask<URL, Integer, Long> {
+
+        @Override
+        protected Long doInBackground(URL... params) {
+            URL url = makeURL(PATH_AUTH, null);
+            HttpURLConnection tokenConnection = getConnection(url, "POST");
+            HttpURLConnection authConnection = getConnection(url, "POST");
+            //connection.setRequestProperty("Authorization", basicAuthCredentials);
+            try {
+                String csrfToken = getCookie(tokenConnection, COOKIE_NAME_TOKEN);
+                loadCookie(authConnection, COOKIE_NAME_TOKEN);
+                HashMap<String, String> authenticationParameters = new HashMap<>();
+                authenticationParameters.put("csrfmiddlewaretoken", csrfToken);
+                authenticationParameters.put("username", restUser);
+                authenticationParameters.put("password", restPassword);
+                setConnectionParameters(authConnection, authenticationParameters);
+                getCookie(tokenConnection, COOKIE_NAME_SESSION);
+                String content = getConnectionContent(authConnection);
+                if (authConnection.getResponseCode() != 200) {
+                    authConnection.disconnect();
+                    return Long.valueOf(0);
+                }
+                authConnection.disconnect();
+                return Long.valueOf(1);
+            } catch (Exception e) {
+                authConnection.disconnect();
+                return Long.valueOf(0);
+            }
+        }
+    }
+
     private class SyncUploadTask extends AsyncTask<URL, Integer, Long> {
 
         @Override
         protected Long doInBackground(URL... params) {
             HttpURLConnection connection = getConnection(params[0], "POST");
+            loadCookie(connection, COOKIE_NAME_TOKEN);
+            loadCookie(connection, COOKIE_NAME_SESSION);
             try {
                 connection.connect();
                 Log.d(
@@ -242,44 +414,46 @@ public class SyncHelper {
         @Override
         protected Long doInBackground(URL... params) {
             HttpURLConnection connection = getConnection(params[0], "GET");
+            loadCookie(connection, COOKIE_NAME_TOKEN);
+            loadCookie(connection, COOKIE_NAME_SESSION);
             try {
                 connection.connect();
-                JSONObject response = new JSONObject(connection.getResponseMessage());
+                JSONObject response = new JSONObject(getConnectionContent(connection));
                 JSONArray data = response.getJSONArray(JSON_DATA_KEY);
                 String[] columnNames = getResponseColumnNames(data);
                 for (int i = 0; i < data.length(); i++) {
                     JSONObject register = data.getJSONObject(i);
                     String[] registerValues = getRegisterValues(register, columnNames);
-                    String rid = registerValues[1];
-                    String trait = registerValues[3];
+                    String rid = registerValues[RID];
+                    String trait = registerValues[TRAIT];
                     Cursor localRegister = dataBase.getUserTraitsRegister(rid, trait);
                     //insert register if it's not present in local database
-                    if (localRegister.getCount() == 0) {
+                    if (!localRegister.moveToNext()) {
                         dataBase.insertUserTraitsFromRemoteOrigin(
-                                registerValues[1],
-                                registerValues[2],
-                                registerValues[3],
-                                registerValues[4],
-                                registerValues[5],
-                                registerValues[6],
-                                registerValues[7],
-                                registerValues[8],
-                                registerValues[9],
-                                registerValues[10]
+                                registerValues[RID],
+                                registerValues[PARENT],
+                                registerValues[TRAIT],
+                                registerValues[USERVALUE],
+                                registerValues[TIMETAKEN],
+                                registerValues[PERSON],
+                                registerValues[LOCATION],
+                                registerValues[REP],
+                                registerValues[NOTES],
+                                registerValues[EXP_ID]
                         );
-                    //update register if it's present with a previous date
-                    } else if (localRegister.getString(5).compareTo(registerValues[5]) < 0) {
+                        //update register if it's present with a previous date
+                    } else if (localRegister.getString(TIMETAKEN).compareTo(registerValues[TIMETAKEN]) < 0) {
                         dataBase.updateUserTraitsFromRemoteOrigin(
-                                registerValues[1],
-                                registerValues[2],
-                                registerValues[3],
-                                registerValues[4],
-                                registerValues[5],
-                                registerValues[6],
-                                registerValues[7],
-                                registerValues[8],
-                                registerValues[9],
-                                registerValues[10]
+                                registerValues[RID],
+                                registerValues[PARENT],
+                                registerValues[TRAIT],
+                                registerValues[USERVALUE],
+                                registerValues[TIMETAKEN],
+                                registerValues[PERSON],
+                                registerValues[LOCATION],
+                                registerValues[REP],
+                                registerValues[NOTES],
+                                registerValues[EXP_ID]
                         );
                     }
                 }
