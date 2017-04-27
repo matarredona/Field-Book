@@ -38,14 +38,10 @@ public class SyncHelper {
     private ContentHelper contentHelper;
 
     private static final String HEADER_NAME_AUTH = "Authorization";
-    private String tokenValue;
     private static final String PARAMETER_NAME_FORMAT = "format";
     private static final String PARAMETER_VALUE_JSON = "json";
 
-    private static final String PARAMETER_NAME_OPERATION = "op";
     private static final String PARAMETER_NAME_DATA = "data";
-    private static final String OPERATION_PARAMETER_VALUE_UPLOAD = "up";
-    private static final String OPERATION_PARAMETER_VALUE_DOWNLOAD = "down";
     private static final String JSON_DATA_KEY = "down";
     private static final String COOKIE_NAME_TOKEN = "csrftoken";
     private static final String COOKIE_NAME_SESSION = "sessionid";
@@ -53,7 +49,11 @@ public class SyncHelper {
     private static final List<String> PATH_AUTH_TOKEN = Arrays.asList(
             "api-token-auth"
     );
-    private static final List<String> PATH_PLANTS = Arrays.asList(
+    private static final List<String> PATH_DATA_UPLOAD = Arrays.asList(
+            "api",
+            "plants"
+    );
+    private static final List<String> PATH_DATA_DOWNLOAD = Arrays.asList(
             "api",
             "plants"
     );
@@ -89,8 +89,6 @@ public class SyncHelper {
             if (authenticationTask.execute().get() == 1) {
                 Cursor data = contentHelper.getLocalData();
                 String[] columnNames = data.getColumnNames();
-                HashMap<String, String> uploadParameters = new HashMap<>();
-                uploadParameters.put(PARAMETER_NAME_OPERATION, OPERATION_PARAMETER_VALUE_UPLOAD);
                 while (data.moveToNext()) {
                     JSONObject json = new JSONObject();
                     for (String column : columnNames) {
@@ -100,9 +98,8 @@ public class SyncHelper {
                             e.printStackTrace();
                         }
                     }
-                    uploadParameters.put(PARAMETER_NAME_DATA, json.toString());
-                    HttpURLConnection connection = connectionHelper.getConnection(PATH_PLANTS, uploadParameters, null, "GET");
-                    SyncUploadTask uploadTask = new SyncUploadTask(connection);
+                    String register = json.toString();
+                    SyncUploadTask uploadTask = new SyncUploadTask(register);
                     uploadTask.execute();
                 }
                 data.close();
@@ -120,8 +117,7 @@ public class SyncHelper {
             if (authenticationTask.execute().get() == 1) {
                 HashMap<String, String> downloadParameters = new HashMap<>();
                 downloadParameters.put(PARAMETER_NAME_FORMAT, PARAMETER_VALUE_JSON);
-                HttpURLConnection connection = connectionHelper.getConnection(PATH_PLANTS, downloadParameters, null, "GET");
-                SyncDownloadTask downloadTask = new SyncDownloadTask(connection);
+                SyncDownloadTask downloadTask = new SyncDownloadTask(downloadParameters);
                 downloadTask.execute();
             } else {
                 showToast(context.getString(R.string.restautenticationfailed));
@@ -142,17 +138,12 @@ public class SyncHelper {
             HashMap<String, String> tokenParameters = new HashMap<>();
             tokenParameters.put("username", restUser);
             tokenParameters.put("password", restPassword);
-            HttpURLConnection connection = connectionHelper.getConnection(PATH_AUTH_TOKEN, tokenParameters, null, "POST");
+            HttpURLConnection connection = connectionHelper.getConnection(PATH_AUTH_TOKEN, null, tokenParameters, null, "POST");
             try {
                 connection.connect();
                 JSONObject tokenJSON = new JSONObject(connectionHelper.getConnectionContent(connection));
-                tokenValue = "Token " + tokenJSON.getString("token");
-
-//                HashMap<String, String> headers = new HashMap<>();
-//                headers.put(HEADER_NAME_AUTH, tokenValue);
-//                HttpURLConnection connectionTest = connectionHelper.getConnection(PATH_PLANTS, null, headers, "GET");
-//                String content = connectionHelper.getConnectionContent(connectionTest);
-
+                String tokenValue = "Token " + tokenJSON.getString("token");
+                connectionHelper.setToken(tokenValue);
                 connection.disconnect();
                 if (connection.getResponseCode() != 200) {
                     return 0L;
@@ -167,14 +158,15 @@ public class SyncHelper {
 
     private class SyncUploadTask extends AsyncTask<URL, Integer, Long> {
 
-        private HttpURLConnection connection;
+        private String body;
 
-        public SyncUploadTask(HttpURLConnection connection) {
-            this.connection = connection;
+        public SyncUploadTask(String body) {
+            this.body = body;
         }
 
         @Override
         protected Long doInBackground(URL... params) {
+            HttpURLConnection connection = connectionHelper.getConnection(PATH_DATA_UPLOAD, body, null, null, "POST");
             try {
                 connection.connect();
                 Log.d(
@@ -191,18 +183,18 @@ public class SyncHelper {
 
     private class SyncDownloadTask extends AsyncTask<URL, Integer, Long> {
 
-        private HttpURLConnection connection;
+        private HashMap downloadParameters;
 
-        public SyncDownloadTask(HttpURLConnection connection) {
-            this.connection = connection;
+        public SyncDownloadTask(HashMap downloadParameters) {
+            this.downloadParameters = downloadParameters;
         }
 
         @Override
         protected Long doInBackground(URL... params) {
+            HttpURLConnection connection = connectionHelper.getConnection(PATH_DATA_DOWNLOAD, null, downloadParameters, null, "GET");
             try {
                 connection.connect();
-                JSONObject response = new JSONObject(connectionHelper.getConnectionContent(connection));
-                JSONArray data = response.getJSONArray(JSON_DATA_KEY);
+                JSONArray data = new JSONArray(connectionHelper.getConnectionContent(connection));
                 String[] columnNames = contentHelper.getResponseColumnNames(data);
                 for (int i = 0; i < data.length(); i++) {
                     JSONObject register = data.getJSONObject(i);
@@ -224,7 +216,7 @@ public class SyncHelper {
                                 registerValues[NOTES],
                                 registerValues[EXP_ID]
                         );
-                        //update register if it's present with a previous date
+                    //update register if it's present with a previous date
                     } else if (localRegister.getString(TIMETAKEN).compareTo(registerValues[TIMETAKEN]) < 0) {
                         contentHelper.getDataBase().updateUserTraitsFromRemoteOrigin(
                                 registerValues[RID],
