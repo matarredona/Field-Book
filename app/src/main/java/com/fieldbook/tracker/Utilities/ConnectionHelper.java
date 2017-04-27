@@ -31,6 +31,7 @@ public class ConnectionHelper {
     private static String restUrl;
     private static ArrayList<String> apiPath;
     private static CookieManager cookieManager;
+    private static HashMap<String, String> defaultHeaders;
 
     private static final int CONNECTION_TIMEOUT = 10000;
     private static final int DATARETRIEVAL_TIMEOUT = 10000;
@@ -38,6 +39,9 @@ public class ConnectionHelper {
     public ConnectionHelper(String url) {
         setRestPath(url);
         this.cookieManager = new CookieManager();
+        this.defaultHeaders = new HashMap<>();
+        defaultHeaders.put("Content-Type", "application/json");
+        defaultHeaders.put("Accept", "application/json, */*");
     }
 
     private void setRestPath(String url) {
@@ -67,23 +71,25 @@ public class ConnectionHelper {
         return basicAuthCredentials;
     }
 
-    public HttpURLConnection getConnection(List<String> path, HashMap<String, String> parameters, HashMap<String, String> headers, String requestMethod) {
+    public HttpURLConnection getConnection(List<String> path, String body, HashMap<String, String> parameters, HashMap<String, String> headers, String requestMethod) {
         URL url = makeURL(path, parameters, requestMethod);
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(CONNECTION_TIMEOUT);
             connection.setReadTimeout(DATARETRIEVAL_TIMEOUT);
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("Accept", "application/json, */*");
             connection.setRequestMethod(requestMethod);
             if (headers != null) {
-                setConnectionHeaders(connection, headers);
+                defaultHeaders.putAll(headers);
             }
+            setConnectionHeaders(connection, defaultHeaders);
             if (requestMethod.equals("POST")) {
                 connection.setDoOutput(true);
                 if (parameters != null) {
-                    setConnectionPostParameters(connection, parameters);
+                    setConnectionContent(connection, null, parameters);
+                }
+                if (body != null) {
+                    setConnectionContent(connection, body, null);
                 }
             } else if (requestMethod.equals("GET")) {
                 connection.setDoInput(true);
@@ -121,15 +127,20 @@ public class ConnectionHelper {
 
     private void setConnectionHeaders(HttpURLConnection connection, HashMap<String, String> headers) {
         for (Map.Entry<String, String> entry : headers.entrySet()) {
-            connection.addRequestProperty(entry.getKey(), entry.getValue());
+            connection.setRequestProperty(entry.getKey(), entry.getValue());
         }
     }
 
-    private void setConnectionPostParameters(HttpURLConnection connection, HashMap<String, String> parameters) {
+    private void setConnectionContent(HttpURLConnection connection, String body, HashMap<String, String> parameters) {
         try {
             OutputStreamWriter os = new OutputStreamWriter(connection.getOutputStream(), "UTF-8");
             BufferedWriter writer = new BufferedWriter(os);
-            writer.write(getParametersStringAsJSON(parameters));
+            if (parameters != null) {
+                writer.write(getParametersStringAsJSON(parameters));
+            }
+            if (body != null) {
+                writer.write(body);
+            }
             writer.flush();
             writer.close();
             os.close();
@@ -150,6 +161,10 @@ public class ConnectionHelper {
         }
         String query = builder.build().getEncodedQuery();
         return query;
+    }
+
+    public void setToken(String token) {
+        this.defaultHeaders.put("Authorization", token);
     }
 
     public String getConnectionContent(HttpURLConnection connection) {

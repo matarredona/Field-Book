@@ -23,6 +23,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -1434,7 +1435,11 @@ public class ConfigActivity extends AppCompatActivity {
             String preparedSetting = "";
             if (syncSettings[i] != getString(R.string.clearsettings)) {
                 if (ep.getString(syncSettings[i], "").length() > 0) {
-                    preparedSetting += syncSettings[i] + ": " + ep.getString(syncSettings[i], "");
+                    if (syncSettings[i] != getString(R.string.syncpasspreference)) {
+                        preparedSetting += syncSettings[i] + ": " + ep.getString(syncSettings[i], "");
+                    } else {
+                        preparedSetting += syncSettings[i] + ": " + ep.getString(syncSettings[i], "").replaceAll(".", "*");
+                    }
                 } else {
                     preparedSetting += syncSettings[i] + ": " + getString(R.string.none);
                 }
@@ -1558,6 +1563,9 @@ public class ConfigActivity extends AppCompatActivity {
         syncSetting.setHint(setting);
         syncSetting.setText(ep.getString(setting,""));
         syncSetting.setSelectAllOnFocus(true);
+        if (setting == getString(R.string.syncpasspreference)) {
+            syncSetting.setTransformationMethod(new PasswordTransformationMethod());
+        }
 
         Button yesButton = (Button) layout.findViewById(R.id.saveBtn);
         yesButton.setOnClickListener(new OnClickListener() {

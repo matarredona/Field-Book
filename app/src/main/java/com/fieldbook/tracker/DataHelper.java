@@ -70,8 +70,8 @@ public class DataHelper {
             + " (rid, parent, trait, userValue, timeTaken, person, location, rep, notes, exp_id) values (?,?,?,?,?,?,?,?,?,?)";
 
     private static final String UPDATE_USER_TRAITS_FROM_REMOTE_ORIGIN = "UPDATE " + USER_TRAITS
-            + " SET rid = ?, parent = ?, trait = ?, userValue = ?, timeTaken = ?, person = ?, location = ?, rep = ?, notes = ?, exp_id = ? "
-            + "WHERE rid = ? AND trait = ?";
+            + " SET rid = ?, parent = ?, trait = ?, userValue = ?, timeTaken = ?, person = ?, location = ?, rep = ?, notes = ?, exp_id = ?"
+            + " WHERE rid = ? AND trait = ?";
 
 
     private SimpleDateFormat timeStamp;
