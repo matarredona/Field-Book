@@ -8,9 +8,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by matarredona on 7/04/17.
@@ -59,7 +61,7 @@ public class ContentHelper {
     public String[] getResponseColumnNames(JSONArray data) throws JSONException {
         JSONObject register = data.getJSONObject(0);
         Iterator keys = register.keys();
-        String[] columnNames = new String[getIteratorLength(keys)];
+        String[] columnNames = new String[getIteratorLength(register.keys())];
         int i = 0;
         while (keys.hasNext()) {
             columnNames[i] = (String) keys.next();
@@ -71,13 +73,14 @@ public class ContentHelper {
         int length = 0;
         while (iterator.hasNext()) {
             length += 1;
+            iterator.next();
         }
         return length;
     }
 
     public String[] getRegisterValues(JSONObject register, String[] columnNames) throws JSONException {
         String[] registerValues = new String[columnNames.length];
-        for (int i = 0; i < columnNames.length; i++) {
+        for (int i = 0; i < registerValues.length; i++) {
             registerValues[i] = (String) register.get(columnNames[i]);
         }
         return registerValues;

@@ -233,6 +233,7 @@ public class SyncHelper {
                     }
                 }
             } catch (Exception e) {
+                connection.disconnect();
                 e.printStackTrace();
             }
             connection.disconnect();
