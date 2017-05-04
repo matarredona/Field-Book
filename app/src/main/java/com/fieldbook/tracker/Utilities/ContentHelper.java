@@ -58,6 +58,17 @@ public class ContentHelper {
 
     }
 
+    public <T> List<List<T>> chopList(List<T> list, int partSize) {
+        List<List<T>> parts = new ArrayList<List<T>>();
+        int listSize = list.size();
+        for (int i = 0; i < listSize; i += partSize) {
+            parts.add(new ArrayList<T>(
+                    list.subList(i, Math.min(listSize, i + partSize)))
+            );
+        }
+        return parts;
+    }
+
     public String[] getResponseColumnNames(JSONArray data) throws JSONException {
         JSONObject register = data.getJSONObject(0);
         Iterator keys = register.keys();

@@ -34,7 +34,7 @@ public class ConnectionHelper {
     private static HashMap<String, String> defaultHeaders;
 
     private static final int CONNECTION_TIMEOUT = 10000;
-    private static final int DATARETRIEVAL_TIMEOUT = 10000;
+    private static final int DATARETRIEVAL_TIMEOUT = 5000;
 
     public ConnectionHelper(String url) {
         setRestPath(url);
@@ -42,6 +42,7 @@ public class ConnectionHelper {
         this.defaultHeaders = new HashMap<>();
         defaultHeaders.put("Content-Type", "application/json");
         defaultHeaders.put("Accept", "application/json, */*");
+        defaultHeaders.put("Connection", "keep-alive");
     }
 
     private void setRestPath(String url) {
