@@ -283,9 +283,17 @@
     <string name="syncdownload">Download data</string>
 
     <!-- notifications -->
-    <string name="malformedresturl">Invalid REST URL (check sync settings)</string>
-    <string name="restautenticationfailed">Authentication failed (check sync settings)</string>
+    <string name="malformedresturl">Invalid REST URL</string>
+    <string name="restuploading">Authenticated, uploading data</string>
+    <string name="restdownloading">Authenticated, downloading data</string>
+    <string name="restautenticationfailed">Authentication failed</string>
+    <string name="restdownloadfailed">Download failed</string>
     <string name="restconnectionfailed">Connection to REST failed</string>
+    <string name="restuploadregistersfailed">Registers failed to upload: </string>
+    <string name="restregisterscreated">Registers created: </string>
+    <string name="restregisterspresent">Registers already present: </string>
+    <string name="restregistersupdated">Registers updated: </string>
+    <string name="restregistersfailed">Registers failed: </string>
 
     <!-- Database dialog -->
     <string name="dbbackup">Database</string>

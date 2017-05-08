@@ -178,9 +178,7 @@ public class DataHelper {
      * Remote database entries are inserted if they aren't already present
      * and if they are more recent
      */
-    public long insertUserTraitsFromRemoteOrigin(String rid, String parent, String trait, String userValue, String timeTaken, String person, String location, String rep, String notes, String exp_id) {
-
-        try {
+    public void insertUserTraitsFromRemoteOrigin(String rid, String parent, String trait, String userValue, String timeTaken, String person, String location, String rep, String notes, String exp_id) throws Exception {
             this.insertUserTraitsFromRemoteOrigin.bindString(1, rid);
             this.insertUserTraitsFromRemoteOrigin.bindString(2, parent);
             this.insertUserTraitsFromRemoteOrigin.bindString(3, trait);
@@ -192,16 +190,10 @@ public class DataHelper {
             this.insertUserTraitsFromRemoteOrigin.bindString(9, notes);
             this.insertUserTraitsFromRemoteOrigin.bindString(10, exp_id);
 
-            return this.insertUserTraitsFromRemoteOrigin.executeInsert();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return -1;
-        }
+            this.insertUserTraitsFromRemoteOrigin.executeInsert();
     }
 
-    public long updateUserTraitsFromRemoteOrigin(String rid, String parent, String trait, String userValue, String timeTaken, String person, String location, String rep, String notes, String exp_id) {
-
-        try {
+    public void updateUserTraitsFromRemoteOrigin(String rid, String parent, String trait, String userValue, String timeTaken, String person, String location, String rep, String notes, String exp_id) throws Exception {
             this.updateUserTraitsFromRemoteOrigin.bindString(1, rid);
             this.updateUserTraitsFromRemoteOrigin.bindString(2, parent);
             this.updateUserTraitsFromRemoteOrigin.bindString(3, trait);
@@ -215,11 +207,7 @@ public class DataHelper {
             this.updateUserTraitsFromRemoteOrigin.bindString(11, rid);
             this.updateUserTraitsFromRemoteOrigin.bindString(12, trait);
 
-            return this.updateUserTraitsFromRemoteOrigin.executeUpdateDelete();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return -1;
-        }
+            this.updateUserTraitsFromRemoteOrigin.executeUpdateDelete();
     }
 
     /**
@@ -804,8 +792,8 @@ public class DataHelper {
 
     public Cursor getUserTraitsRegister(String rid, String trait) {
         Cursor cursor = db.rawQuery(
-                "SELECT * FROM " + USER_TRAITS + " WHERE rid = " + rid + " AND trait = " + trait,
-                null);
+                "SELECT * FROM " + USER_TRAITS + " WHERE rid = ? AND trait = ?",
+                new String[]{rid, trait});
         return cursor;
     }
 

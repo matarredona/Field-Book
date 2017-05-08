@@ -14,13 +14,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by matarredona on 22/03/17.
@@ -35,45 +37,23 @@ public class SyncHelper {
     private ConnectionHelper connectionHelper;
     private ContentHelper contentHelper;
 
-    private static final String HEADER_NAME_AUTH = "Authorization";
     private static final String PARAMETER_NAME_FORMAT = "format";
     private static final String PARAMETER_VALUE_JSON = "json";
-
-    private static final String PARAMETER_NAME_DATA = "data";
-    private static final String JSON_DATA_KEY = "down";
-    private static final String COOKIE_NAME_TOKEN = "csrftoken";
-    private static final String COOKIE_NAME_SESSION = "sessionid";
 
     private static final List<String> PATH_AUTH_TOKEN = Arrays.asList(
             "api-token-auth"
     );
-    private static final List<String> PATH_DATA_UPLOAD = Arrays.asList(
+    private static final List<String> PATH_DATA_SYNC = Arrays.asList(
             "api",
-            "plants"
+            "fieldbook_observations"
     );
-    private static final List<String> PATH_DATA_DOWNLOAD = Arrays.asList(
+    private static final List<String> PATH_DATA_PRODUCTION_UPLOAD = Arrays.asList(
             "api",
             "plants"
     );
 
     private static final int MAX_UPLOAD_ATTEMPTS = 2;
     private static final int MAX_SIMULTANEOUS_SERVER_CALLS = 24;
-
-    private static final int REGISTER_FAILED = 0;
-    private static final int REGISTER_INTEGRATED = 1;
-    private static final int REGISTER_PRESENT = 2;
-    private static final int REGISTER_UPDATED = 3;
-
-    private static final int RID = 1;
-    private static final int PARENT = 2;
-    private static final int TRAIT = 3;
-    private static final int USERVALUE = 4;
-    private static final int TIMETAKEN = 5;
-    private static final int PERSON = 6;
-    private static final int LOCATION = 7;
-    private static final int REP = 8;
-    private static final int NOTES = 9;
-    private static final int EXP_ID = 10;
 
     public SyncHelper(Context context, SharedPreferences sharedPreferences, DataHelper database) {
         this.context = context;
@@ -116,11 +96,12 @@ public class SyncHelper {
                 System.setProperty("http.keepAlive", "true");
                 List<List<String>> preparedRegisters = contentHelper.chopList(rawRegisters, MAX_SIMULTANEOUS_SERVER_CALLS);
                 int registersFailed = 0;
-                int registersIntegrated = 0;
+                int registersCreated = 0;
                 int registersPresent = 0;
                 Log.d("", "launching tasks");
                 for (List<String> registers : preparedRegisters) {
                     int attempts = 0;
+                    //unsuccessful tasks are relaunched
                     while (!registers.isEmpty() && attempts < MAX_UPLOAD_ATTEMPTS) {
                         attempts += 1;
                         ArrayList<SyncUploadTask> tasks = new ArrayList<SyncUploadTask>();
@@ -134,35 +115,34 @@ public class SyncHelper {
                         //get tasks responses
                         for (SyncUploadTask task : tasks) {
                             Log.d("", "getting task response");
-                            switch (task.get()) {
-                                case 201:
-                                    registersIntegrated += 1;
+                            HashMap<String, String> uploadResume = task.get();
+                            switch (uploadResume.get("response code")) {
+                                case "201":
+                                    registersCreated += 1;
                                     tasks.remove(task);
                                     break;
-                                case 202:
+                                case "200":
                                     registersPresent += 1;
                                     tasks.remove(task);
                                     break;
+                                default:
+                                    Log.d(uploadResume.get("response code"), uploadResume.get("response detail"));
+                                    break;
                             }
-                            Log.d("", "done, bad endpoint");
+
                         }
                         Log.d("", "attempt finished");
+                        if (attempts == MAX_UPLOAD_ATTEMPTS) {
+                            registersFailed += tasks.size();
+                        }
                     }
-                    registersFailed += registers.size();
                     Log.d("", "list fragment finished");
                 }
                 Log.d("", "upload finished");
                 showToast(context.getString(R.string.restuploadregistersfailed) + registersFailed);
-                showToast(context.getString(R.string.restregistersintegrated) + registersIntegrated);
+                showToast(context.getString(R.string.restregisterscreated) + registersCreated);
                 showToast(context.getString(R.string.restregisterspresent) + registersPresent);
 
-/*
-                SyncSingleUploadTask uploadTask = new SyncSingleUploadTask();
-                Integer[] uploadResume = uploadTask.execute().get();
-                showToast(context.getString(R.string.restuploadregistersfailed) + uploadResume[REGISTER_FAILED]);
-                showToast(context.getString(R.string.restregistersintegrated) + uploadResume[REGISTER_INTEGRATED]);
-                showToast(context.getString(R.string.restregisterspresent) + uploadResume[REGISTER_PRESENT]);
-*/
             } else {
                 showToast(context.getString(R.string.restautenticationfailed));
             }
@@ -178,13 +158,17 @@ public class SyncHelper {
             if (authenticationTask.execute().get()) {
                 showToast(context.getString(R.string.restdownloading));
                 SyncDownloadTask downloadTask = new SyncDownloadTask();
-                Integer[] downloadResume = downloadTask.execute().get();
-                if (downloadResume[REGISTER_FAILED] > 0) {
+                HashMap<String, String> downloadResume = downloadTask.execute().get();
+                if (!downloadResume.get("response code").equals("200")) {
                     showToast(context.getString(R.string.restdownloadfailed));
+                    showToast(downloadResume.get("response detail"));
+                } else {
+                    showToast(context.getString(R.string.restregisterscreated) + downloadResume.get("registers created") + "\n"
+                            + context.getString(R.string.restregistersupdated) + downloadResume.get("registers updated") + "\n"
+                            + context.getString(R.string.restregisterspresent) + downloadResume.get("registers present") + "\n"
+                            + context.getString(R.string.restregistersfailed) + downloadResume.get("registers failed")
+                    );
                 }
-                showToast(context.getString(R.string.restregistersintegrated) + downloadResume[REGISTER_INTEGRATED]);
-                showToast(context.getString(R.string.restregistersupdated) + downloadResume[REGISTER_UPDATED]);
-                showToast(context.getString(R.string.restregisterspresent) + downloadResume[REGISTER_PRESENT]);
             } else {
                 showToast(context.getString(R.string.restautenticationfailed));
             }
@@ -222,70 +206,7 @@ public class SyncHelper {
         }
     }
 
-    private class SyncSingleUploadTask extends AsyncTask<URL, Integer, Integer[]> {
-
-        @Override
-        protected Integer[] doInBackground(URL... params) {
-            Log.d("", "thread started");
-
-            Integer[] resume = new Integer[3];
-            Arrays.fill(resume, 0);
-            //prepare upload registers
-            Cursor data = contentHelper.getLocalData();
-            ArrayList<String> registers = new ArrayList<String>();
-            String[] columnNames = data.getColumnNames();
-            while (data.moveToNext()) {
-                JSONObject json = new JSONObject();
-                for (String column : columnNames) {
-                    try {
-                        json.put(column, data.getString(data.getColumnIndex(column)));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-                String register = json.toString();
-                registers.add(register);
-            }
-            data.close();
-            Log.d("", "registers prepared");
-            //launch connections
-            int attempts = 0;
-            while (!registers.isEmpty() && attempts < MAX_UPLOAD_ATTEMPTS) {
-                attempts += 1;
-                for (String register : registers) {
-                    try {
-                        Log.d("", "launching connection");
-                        HttpURLConnection connection = connectionHelper.getConnection(PATH_DATA_UPLOAD, register, null, null, "POST");
-                        connection.connect();
-                        switch (connection.getResponseCode()) {
-                            case 201:
-                                resume[REGISTER_INTEGRATED] += 1;
-                                //connection.disconnect();
-                                registers.remove(register);
-                                break;
-                            case 202:
-                                resume[REGISTER_PRESENT] += 1;
-                                //connection.disconnect();
-                                registers.remove(register);
-                                break;
-                            default:
-                                Log.d("", "closing connection");
-                                //connection.disconnect();
-                                break;
-                        }
-                    } catch (IOException e) {
-                        Log.d("", "connection exception");
-                        e.printStackTrace();
-                    }
-                }
-            }
-            Log.d("", "thread finishing");
-            resume[REGISTER_FAILED] = registers.size();
-            return resume;
-        }
-    }
-
-    private class SyncUploadTask extends AsyncTask<URL, Integer, Integer> {
+    private class SyncUploadTask extends AsyncTask<URL, Integer, HashMap<String, String>> {
 
         private String body;
 
@@ -294,78 +215,99 @@ public class SyncHelper {
         }
 
         @Override
-        protected Integer doInBackground(URL... params) {
-            HttpURLConnection connection = connectionHelper.getConnection(PATH_DATA_UPLOAD, body, null, null, "POST");
+        protected HashMap<String, String> doInBackground(URL... params) {
+            HashMap<String, String> resume = new HashMap<>();
+            HttpURLConnection connection = connectionHelper.getConnection(PATH_DATA_PRODUCTION_UPLOAD, body, null, null, "POST");
             try {
                 connection.connect();
-                int responseCode = connection.getResponseCode();
-                //connection.disconnect();
-                return responseCode;
+                JSONObject response = new JSONObject(connectionHelper.getConnectionContent(connection));
+                resume.put("response detail", response.getString("detail"));
+                resume.put("response code", Integer.toString(connection.getResponseCode()));
             } catch (Exception e) {
-                //connection.disconnect();
-                return REGISTER_FAILED;
+                e.printStackTrace();
             }
+            return resume;
         }
     }
 
-    private class SyncDownloadTask extends AsyncTask<URL, Integer, Integer[]> {
+    private class SyncDownloadTask extends AsyncTask<URL, Integer, HashMap<String, String>> {
 
         @Override
-        protected Integer[] doInBackground(URL... params) {
-            Integer[] resume = new Integer[4];
-            Arrays.fill(resume, 0);
+        protected HashMap<String, String> doInBackground(URL... params) {
+            HashMap<String, String> resume = new HashMap<>();
 
             HashMap<String, String> downloadParameters = new HashMap<>();
             downloadParameters.put(PARAMETER_NAME_FORMAT, PARAMETER_VALUE_JSON);
-            HttpURLConnection connection = connectionHelper.getConnection(PATH_DATA_DOWNLOAD, null, downloadParameters, null, "GET");
+            HttpURLConnection connection = connectionHelper.getConnection(PATH_DATA_SYNC, null, downloadParameters, null, "GET");
             try {
                 connection.connect();
-                JSONArray data = new JSONArray(connectionHelper.getConnectionContent(connection));
-                String[] columnNames = contentHelper.getResponseColumnNames(data);
-                for (int i = 0; i < data.length(); i++) {
-                    JSONObject register = data.getJSONObject(i);
-                    String[] registerValues = contentHelper.getRegisterValues(register, columnNames);
-                    String rid = registerValues[RID];
-                    String trait = registerValues[TRAIT];
-                    Cursor localRegister = contentHelper.getDataBase().getUserTraitsRegister(rid, trait);
-                    //insert register if it's not present in local database
-                    if (!localRegister.moveToNext()) {
-                        contentHelper.getDataBase().insertUserTraitsFromRemoteOrigin(
-                                registerValues[RID],
-                                registerValues[PARENT],
-                                registerValues[TRAIT],
-                                registerValues[USERVALUE],
-                                registerValues[TIMETAKEN],
-                                registerValues[PERSON],
-                                registerValues[LOCATION],
-                                registerValues[REP],
-                                registerValues[NOTES],
-                                registerValues[EXP_ID]
-                        );
-                        resume[REGISTER_INTEGRATED] += 1;
-                        //update register if it's present with a previous date
-                    } else if (localRegister.getString(TIMETAKEN).compareTo(registerValues[TIMETAKEN]) < 0) {
-                        contentHelper.getDataBase().updateUserTraitsFromRemoteOrigin(
-                                registerValues[RID],
-                                registerValues[PARENT],
-                                registerValues[TRAIT],
-                                registerValues[USERVALUE],
-                                registerValues[TIMETAKEN],
-                                registerValues[PERSON],
-                                registerValues[LOCATION],
-                                registerValues[REP],
-                                registerValues[NOTES],
-                                registerValues[EXP_ID]
-                        );
-                        resume[REGISTER_UPDATED] += 1;
-                    } else {
-                        resume[REGISTER_PRESENT] += 1;
+                resume.put("response code", Integer.toString(connection.getResponseCode()));
+                if (connection.getResponseCode() == 200) {
+                    JSONArray data = new JSONArray(connectionHelper.getConnectionContent(connection));
+                    SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ",
+                            Locale.getDefault());
+                    int registersCreated = 0;
+                    int registersUpdated = 0;
+                    int registersPresent = 0;
+                    int registersFailed = 0;
+                    for (int i = 0; i < data.length(); i++) {
+                        HashMap<String, String> register = contentHelper.getMap(data.getJSONObject(i));
+                        try {
+                            Cursor localRegister = contentHelper.getDataBase().getUserTraitsRegister(
+                                    register.get("rid"),
+                                    register.get("trait")
+                            );
+                            //insert register if it's not present in local database
+                            if (!localRegister.moveToNext()) {
+                                contentHelper.getDataBase().insertUserTraitsFromRemoteOrigin(
+                                        register.get("rid"),
+                                        register.get("parent"),
+                                        register.get("trait"),
+                                        register.get("userValue"),
+                                        register.get("timeTaken"),
+                                        register.get("person"),
+                                        register.get("location"),
+                                        register.get("rep"),
+                                        register.get("notes"),
+                                        register.get("exp_id")
+                                );
+                                registersCreated += 1;
+                                //update register if it's present with a previous date
+                            } else {
+                                Date localDate = dateFormatter.parse(localRegister.getString(localRegister.getColumnIndex("timeTaken")));
+                                Date remoteDate = dateFormatter.parse(register.get("timeTaken"));
+                                if (localDate.before(remoteDate)) {
+                                    contentHelper.getDataBase().updateUserTraitsFromRemoteOrigin(
+                                            register.get("rid"),
+                                            register.get("parent"),
+                                            register.get("trait"),
+                                            register.get("userValue"),
+                                            register.get("timeTaken"),
+                                            register.get("person"),
+                                            register.get("location"),
+                                            register.get("rep"),
+                                            register.get("notes"),
+                                            register.get("exp_id")
+                                    );
+                                    registersUpdated += 1;
+                                } else {
+                                    registersPresent += 1;
+                                }
+                            }
+                        } catch (Exception e) {
+                            registersFailed += 1;
+                        }
                     }
+                    resume.put("registers created", Integer.toString(registersCreated));
+                    resume.put("registers updated", Integer.toString(registersUpdated));
+                    resume.put("registers present", Integer.toString(registersPresent));
+                    resume.put("registers failed", Integer.toString(registersFailed));
+                } else {
+                    JSONObject response = new JSONObject(connectionHelper.getConnectionContent(connection));
+                    resume.put("response detail", response.getString("detail"));
                 }
             } catch (Exception e) {
-                resume[REGISTER_FAILED] += 1;
                 connection.disconnect();
-                return resume;
             }
             connection.disconnect();
             return resume;

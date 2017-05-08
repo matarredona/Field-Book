@@ -4,13 +4,12 @@ import android.database.Cursor;
 
 import com.fieldbook.tracker.DataHelper;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -69,32 +68,15 @@ public class ContentHelper {
         return parts;
     }
 
-    public String[] getResponseColumnNames(JSONArray data) throws JSONException {
-        JSONObject register = data.getJSONObject(0);
+    public HashMap<String, String> getMap(JSONObject register) throws JSONException {
+        HashMap<String, String> registerMap = new HashMap<>();
         Iterator keys = register.keys();
-        String[] columnNames = new String[getIteratorLength(register.keys())];
-        int i = 0;
         while (keys.hasNext()) {
-            columnNames[i] = (String) keys.next();
+            String key = (String) keys.next();
+            String value = register.getString(key);
+            registerMap.put(key, value);
         }
-        return columnNames;
-    }
-
-    private int getIteratorLength(Iterator iterator) {
-        int length = 0;
-        while (iterator.hasNext()) {
-            length += 1;
-            iterator.next();
-        }
-        return length;
-    }
-
-    public String[] getRegisterValues(JSONObject register, String[] columnNames) throws JSONException {
-        String[] registerValues = new String[columnNames.length];
-        for (int i = 0; i < registerValues.length; i++) {
-            registerValues[i] = (String) register.get(columnNames[i]);
-        }
-        return registerValues;
+        return registerMap;
     }
 
     public DataHelper getDataBase() {
