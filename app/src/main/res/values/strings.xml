@@ -269,9 +269,14 @@
     <string name="synchttpspreference">REST-Scheme</string>
     <string name="synconlyuniquepreference">REST-OnlyUnique</string>
     <string name="synconlyactivepreference">REST-OnlyActive</string>
+    <string name="syncadditionalfieldspreference">REST-AdditionalFields</string>
+    <string name="syncadditionalfieldstitle">Additional register columns to upload</string>
+    <string name="syncadditionalfieldsname">Column name</string>
+    <string name="syncadditionalfieldsvalue">Constant value</string>
     <string name="uniquenamepreference">ImportUniqueName</string>
     <string name="https">https</string>
     <string name="http">http</string>
+    <string name="newcolumn">new</string>
 
     <string name="syncurldialogtitle">Set REST URL</string>
     <string name="syncuserdialogtitle">Set REST user</string>
@@ -294,6 +299,7 @@
     <string name="restregisterspresent">Registers already present: </string>
     <string name="restregistersupdated">Registers updated: </string>
     <string name="restregistersfailed">Registers failed: </string>
+    <string name="restregistersremaining">Registers remaining: </string>
 
     <!-- Database dialog -->
     <string name="dbbackup">Database</string>

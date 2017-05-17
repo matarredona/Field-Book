@@ -29,6 +29,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -76,8 +77,10 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import jxl.Workbook;
 import jxl.WorkbookSettings;
@@ -111,6 +114,9 @@ public class ConfigActivity extends AppCompatActivity {
 
     private ListView setupList;
     private ListView syncList;
+    private Spinner additionalFieldsSpinner;
+    private HashSet additionalFieldsSet;
+    private boolean isAdditionalFieldsSpinnerTouched;
 
     String versionName;
 
@@ -1449,7 +1455,7 @@ public class ConfigActivity extends AppCompatActivity {
         return syncSettings;
     }
 
-    private void updateSyncList() {
+    private void updateSyncSettingsList() {
         ArrayAdapter<String> ga = (ArrayAdapter) syncList.getAdapter();
 
         if (ga != null) {
@@ -1467,6 +1473,20 @@ public class ConfigActivity extends AppCompatActivity {
         ga.notifyDataSetChanged();
     }
 
+    private void updateSyncAdditionalColumnsList(HashSet additionalColumnsSet) {
+        ArrayAdapter<String> spinnerAdapter = (ArrayAdapter) additionalFieldsSpinner.getAdapter();
+
+        if (spinnerAdapter != null) {
+            spinnerAdapter.clear();
+        }
+
+        if (additionalColumnsSet != null) {
+            spinnerAdapter.addAll(additionalColumnsSet);
+        }
+
+        spinnerAdapter.notifyDataSetChanged();
+    }
+
     private void showDataSyncDialog() {
 
         DialogHelper dHelper = new DialogHelper();
@@ -1477,40 +1497,47 @@ public class ConfigActivity extends AppCompatActivity {
                 ConfigActivity.this
         );
 
+        if (additionalFieldsSet == null) {
+            additionalFieldsSet = new HashSet();
+            additionalFieldsSet.add(getString(R.string.newcolumn));
+            additionalFieldsSet.add("");
+            additionalFieldsSet.addAll(ep.getStringSet(getString(R.string.syncadditionalfieldspreference), additionalFieldsSet ));
+        }
+        ArrayList additionalFieldsList = new ArrayList(additionalFieldsSet);
+        ArrayAdapter spinnerAdapter = new ArrayAdapter(this, R.layout.spinnerlayout, additionalFieldsList);
+        spinnerAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        additionalFieldsSpinner = (Spinner) layout.findViewById(R.id.spinnerAdditionalFields);
+        additionalFieldsSpinner.setAdapter(spinnerAdapter);
+
+        isAdditionalFieldsSpinnerTouched = false;
+
+        additionalFieldsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (isAdditionalFieldsSpinnerTouched) {
+                    String nameValue = additionalFieldsSpinner.getSelectedItem().toString();
+                    if (nameValue == getString(R.string.newcolumn) || nameValue == "") {
+                        showSyncAdditionalFieldsDialog("", true);
+                    } else {
+                        showSyncAdditionalFieldsDialog(nameValue, false);
+                    }
+                } else {
+                    touchAdditionalFieldsSpinner();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
         String[] array = prepareSyncList();
         ArrayList<String> lst = new ArrayList<String>();
         lst.addAll(Arrays.asList(array));
 
-        onlyUnique = (RadioButton) layout.findViewById(R.id.syncOnlyUnique);
-        allColumns = (RadioButton) layout.findViewById(R.id.syncAllColumns);
-        if (ep.getBoolean(getResources().getString(R.string.synconlyuniquepreference), true) == true) {
-            onlyUnique.setChecked(true);
-        } else {
-            allColumns.setChecked(true);
-        }
-        activeTraits = (RadioButton) layout.findViewById(R.id.syncActiveTraits);
-        allTraits = (RadioButton) layout.findViewById(R.id.syncAllTraits);
-        if (ep.getBoolean(getResources().getString(R.string.synconlyactivepreference), true) == true) {
-            activeTraits.setChecked(true);
-        } else {
-            allTraits.setChecked(true);
-        }
-
         Button setupCloseBtn = (Button) layout.findViewById(R.id.closeBtn);
         setupCloseBtn.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                Editor e = ep.edit();
-                if (onlyUnique.isChecked()) {
-                    e.putBoolean(getString(R.string.synconlyuniquepreference), true);
-                } else {
-                    e.putBoolean(getString(R.string.synconlyuniquepreference), false);
-                }
-                if (activeTraits.isChecked()) {
-                    e.putBoolean(getString(R.string.synconlyactivepreference), true);
-                } else {
-                    e.putBoolean(getString(R.string.synconlyactivepreference), false);
-                }
-                e.apply();
                 dataSyncDialog.dismiss();
             }
         });
@@ -1575,12 +1602,83 @@ public class ConfigActivity extends AppCompatActivity {
                 e.putString(setting, syncSetting.getText().toString());
                 e.apply();
                 if (dataSyncDialog.isShowing()) {
-                    updateSyncList();
+                    updateSyncSettingsList();
                 }
                 syncSettingDialog.dismiss();
             }
         });
         syncSettingDialog.show();
+    }
+
+    private void showSyncAdditionalFieldsDialog(final String inputNameValue, final boolean isNew) {
+
+        DialogHelper dHelper = new DialogHelper();
+        View layout = dHelper.getDialogView(R.layout.sync_additional_columns, ConfigActivity.this);
+        final AlertDialog syncAdditionalColumnsSettingDialog = dHelper.buildDialog(
+                "",
+                layout,
+                ConfigActivity.this
+        );
+
+        final EditText syncAdditionalColumnsName = (EditText) layout.findViewById(R.id.syncAdditionalColumnsName);
+        syncAdditionalColumnsName.setSelectAllOnFocus(true);
+
+        final EditText syncAdditionalColumnsValue = (EditText) layout.findViewById(R.id.syncAdditionalColumnsValue);
+        syncAdditionalColumnsName.setSelectAllOnFocus(true);
+
+        if (!isNew) {
+            String[] nameValue = inputNameValue.split(": ");
+            syncAdditionalColumnsName.setText(nameValue[0]);
+            syncAdditionalColumnsValue.setText(nameValue[1]);
+        }
+
+        Button yesButton = (Button) layout.findViewById(R.id.syncAdditionalColumnsSaveBtn);
+        yesButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View arg0) {
+                String name = syncAdditionalColumnsName.getText().toString();
+                String value = syncAdditionalColumnsValue.getText().toString();
+                if (name != "" && value != "") {
+                    String outputNameValue = name + ": " + value;
+                    if (!isNew) {
+                        getAdditionalFieldsSet().remove(inputNameValue);
+                    }
+                    getAdditionalFieldsSet().add(outputNameValue);
+                    Editor e = ep.edit();
+                    e.putStringSet(getString(R.string.syncadditionalfieldspreference), getAdditionalFieldsSet());
+                    e.apply();
+                }
+                if (dataSyncDialog.isShowing()) {
+                    updateSyncAdditionalColumnsList(getAdditionalFieldsSet());
+                }
+                syncAdditionalColumnsSettingDialog.dismiss();
+            }
+        });
+
+        Button deleteButton = (Button) layout.findViewById(R.id.syncAdditionalColumnsDeleteBtn);
+        deleteButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View arg0) {
+                if (!isNew) {
+                    getAdditionalFieldsSet().remove(inputNameValue);
+                    Editor e = ep.edit();
+                    e.putStringSet(getString(R.string.syncadditionalfieldspreference), getAdditionalFieldsSet());
+                    e.apply();
+                }
+                if (dataSyncDialog.isShowing()) {
+                    updateSyncAdditionalColumnsList(getAdditionalFieldsSet());
+                }
+                syncAdditionalColumnsSettingDialog.dismiss();
+            }
+        });
+
+        syncAdditionalColumnsSettingDialog.show();
+    }
+
+    private void touchAdditionalFieldsSpinner() {
+        isAdditionalFieldsSpinnerTouched = true;
+    }
+
+    private HashSet getAdditionalFieldsSet() {
+        return additionalFieldsSet;
     }
 
     private void updateLanguage(String loc, String reg) {
@@ -1945,7 +2043,18 @@ public class ConfigActivity extends AppCompatActivity {
                 ed.putString("FirstName", "");
                 ed.putString("LastName", "");
                 ed.putString("Location", "");
+                ed.putString(getString(R.string.syncurlpreference), "");
+                ed.putString(getString(R.string.syncuserpreference), "");
+                ed.putString(getString(R.string.syncpasspreference), "");
+                ed.putStringSet(getString(R.string.syncadditionalfieldspreference), null);
                 ed.apply();
+
+                if (dataSyncDialog.isShowing()) {
+                    updateSyncSettingsList();
+                }
+                if (dataSyncDialog.isShowing()) {
+                    updateSyncAdditionalColumnsList(null);
+                }
             }
         });
 

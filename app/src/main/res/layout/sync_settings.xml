@@ -9,85 +9,6 @@
     android:paddingTop="5dp"
     android:paddingBottom="5dp">
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="3">
-
-        <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/fieldcolumns"
-                android:textColor="@color/s_text"
-                android:textSize="@dimen/text_size_medium"
-                android:textStyle="bold" />
-
-            <RadioGroup
-                android:id="@+id/fieldsRadioGroup"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
-                <RadioButton
-                    android:id="@+id/syncOnlyUnique"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/onlyunique"
-                    android:textSize="@dimen/text_size_medium" />
-
-                <RadioButton
-                    android:id="@+id/syncAllColumns"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/allcolumns"
-                    android:textSize="@dimen/text_size_medium" />
-            </RadioGroup>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="15dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/traits"
-                android:textColor="@color/s_text"
-                android:textSize="@dimen/text_size_medium"
-                android:textStyle="bold" />
-
-            <RadioGroup
-                android:id="@+id/traitsRadioGroup"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
-                <RadioButton
-                    android:id="@+id/syncActiveTraits"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/activetraits"
-                    android:textSize="@dimen/text_size_medium" />
-
-                <RadioButton
-                    android:id="@+id/syncAllTraits"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/alltraits"
-                    android:textSize="@dimen/text_size_medium" />
-
-            </RadioGroup>
-        </LinearLayout>
-    </LinearLayout>
-
     <ListView
         android:id="@+id/myList"
         android:choiceMode="singleChoice"
@@ -95,6 +16,25 @@
         android:layout_height="wrap_content"
         android:divider="@drawable/list_divider"
         android:layout_weight="1" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/syncadditionalfieldstitle"
+            android:textColor="@color/s_text"
+            android:textSize="@dimen/text_size_medium"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/spinnerAdditionalFields"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"></Spinner>
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="fill_parent"

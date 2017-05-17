@@ -3,15 +3,20 @@ package com.fieldbook.tracker.Utilities;
 import android.database.Cursor;
 
 import com.fieldbook.tracker.DataHelper;
+import com.fieldbook.tracker.Models.UserTraitBean;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by matarredona on 7/04/17.
@@ -77,6 +82,24 @@ public class ContentHelper {
             registerMap.put(key, value);
         }
         return registerMap;
+    }
+
+    public HashSet<UserTraitBean> getSet(JSONArray data) throws JSONException, ParseException {
+        HashSet<UserTraitBean> dataSet = new HashSet<UserTraitBean>();
+        for (int i = 0; i < data.length(); i++) {
+            UserTraitBean register = new UserTraitBean(data.getJSONObject(i));
+            dataSet.add(register);
+        }
+        return dataSet;
+    }
+
+    public HashSet<UserTraitBean> getSet(Cursor data) throws ParseException {
+        HashSet<UserTraitBean> dataSet = new HashSet<UserTraitBean>();
+        while (data.moveToNext()) {
+            UserTraitBean register = new UserTraitBean(data);
+            dataSet.add(register);
+        }
+        return dataSet;
     }
 
     public DataHelper getDataBase() {

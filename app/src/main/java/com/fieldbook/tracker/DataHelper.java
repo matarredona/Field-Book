@@ -12,6 +12,7 @@ import android.database.sqlite.SQLiteStatement;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.fieldbook.tracker.Models.UserTraitBean;
 import com.fieldbook.tracker.Search.SearchData;
 import com.fieldbook.tracker.Trait.TraitObject;
 
@@ -178,34 +179,38 @@ public class DataHelper {
      * Remote database entries are inserted if they aren't already present
      * and if they are more recent
      */
-    public void insertUserTraitsFromRemoteOrigin(String rid, String parent, String trait, String userValue, String timeTaken, String person, String location, String rep, String notes, String exp_id) throws Exception {
-            this.insertUserTraitsFromRemoteOrigin.bindString(1, rid);
-            this.insertUserTraitsFromRemoteOrigin.bindString(2, parent);
-            this.insertUserTraitsFromRemoteOrigin.bindString(3, trait);
-            this.insertUserTraitsFromRemoteOrigin.bindString(4, userValue);
-            this.insertUserTraitsFromRemoteOrigin.bindString(5, timeTaken);
-            this.insertUserTraitsFromRemoteOrigin.bindString(6, person);
-            this.insertUserTraitsFromRemoteOrigin.bindString(7, location);
-            this.insertUserTraitsFromRemoteOrigin.bindString(8, rep);
-            this.insertUserTraitsFromRemoteOrigin.bindString(9, notes);
-            this.insertUserTraitsFromRemoteOrigin.bindString(10, exp_id);
+    public void insertUserTraitsFromRemoteOrigin(UserTraitBean userTraitBean) throws Exception {
+            this.insertUserTraitsFromRemoteOrigin.bindString(1, userTraitBean.getRid());
+            this.insertUserTraitsFromRemoteOrigin.bindString(2, userTraitBean.getParent());
+            this.insertUserTraitsFromRemoteOrigin.bindString(3, userTraitBean.getTrait());
+            this.insertUserTraitsFromRemoteOrigin.bindString(4, userTraitBean.getUserValue());
+            SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ",
+                Locale.getDefault());
+            this.insertUserTraitsFromRemoteOrigin.bindString(5, dateFormatter.format(userTraitBean.getTimeTaken()));
+            this.insertUserTraitsFromRemoteOrigin.bindString(6, userTraitBean.getPerson());
+            this.insertUserTraitsFromRemoteOrigin.bindString(7, userTraitBean.getLocation());
+            this.insertUserTraitsFromRemoteOrigin.bindString(8, Integer.toString(userTraitBean.getRep()));
+            this.insertUserTraitsFromRemoteOrigin.bindString(9, userTraitBean.getNotes());
+            this.insertUserTraitsFromRemoteOrigin.bindString(10, userTraitBean.getExp_id());
 
             this.insertUserTraitsFromRemoteOrigin.executeInsert();
     }
 
-    public void updateUserTraitsFromRemoteOrigin(String rid, String parent, String trait, String userValue, String timeTaken, String person, String location, String rep, String notes, String exp_id) throws Exception {
-            this.updateUserTraitsFromRemoteOrigin.bindString(1, rid);
-            this.updateUserTraitsFromRemoteOrigin.bindString(2, parent);
-            this.updateUserTraitsFromRemoteOrigin.bindString(3, trait);
-            this.updateUserTraitsFromRemoteOrigin.bindString(4, userValue);
-            this.updateUserTraitsFromRemoteOrigin.bindString(5, timeTaken);
-            this.updateUserTraitsFromRemoteOrigin.bindString(6, person);
-            this.updateUserTraitsFromRemoteOrigin.bindString(7, location);
-            this.updateUserTraitsFromRemoteOrigin.bindString(8, rep);
-            this.updateUserTraitsFromRemoteOrigin.bindString(9, notes);
-            this.updateUserTraitsFromRemoteOrigin.bindString(10, exp_id);
-            this.updateUserTraitsFromRemoteOrigin.bindString(11, rid);
-            this.updateUserTraitsFromRemoteOrigin.bindString(12, trait);
+    public void updateUserTraitsFromRemoteOrigin(UserTraitBean userTraitBean) throws Exception {
+            this.updateUserTraitsFromRemoteOrigin.bindString(1, userTraitBean.getRid());
+            this.updateUserTraitsFromRemoteOrigin.bindString(2, userTraitBean.getParent());
+            this.updateUserTraitsFromRemoteOrigin.bindString(3, userTraitBean.getTrait());
+            this.updateUserTraitsFromRemoteOrigin.bindString(4, userTraitBean.getUserValue());
+            SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ",
+                Locale.getDefault());
+            this.updateUserTraitsFromRemoteOrigin.bindString(5, dateFormatter.format(userTraitBean.getTimeTaken()));
+            this.updateUserTraitsFromRemoteOrigin.bindString(6, userTraitBean.getPerson());
+            this.updateUserTraitsFromRemoteOrigin.bindString(7, userTraitBean.getLocation());
+            this.updateUserTraitsFromRemoteOrigin.bindString(8, Integer.toString(userTraitBean.getRep()));
+            this.updateUserTraitsFromRemoteOrigin.bindString(9, userTraitBean.getNotes());
+            this.updateUserTraitsFromRemoteOrigin.bindString(10, userTraitBean.getExp_id());
+            this.updateUserTraitsFromRemoteOrigin.bindString(11, userTraitBean.getRid());
+            this.updateUserTraitsFromRemoteOrigin.bindString(12, userTraitBean.getTrait());
 
             this.updateUserTraitsFromRemoteOrigin.executeUpdateDelete();
     }
@@ -790,10 +795,17 @@ public class DataHelper {
         }
     }
 
-    public Cursor getUserTraitsRegister(String rid, String trait) {
+    public Cursor findUserTraitsRegister(UserTraitBean userTraitBean) {
+        String rid = userTraitBean.getRid();
+        String parent = userTraitBean.getParent();
         Cursor cursor = db.rawQuery(
-                "SELECT * FROM " + USER_TRAITS + " WHERE rid = ? AND trait = ?",
-                new String[]{rid, trait});
+                "SELECT * FROM " + USER_TRAITS + " WHERE rid = ? AND parent = ?",
+                new String[]{rid, parent});
+        return cursor;
+    }
+
+    public Cursor getAllUserTraits() {
+        Cursor cursor = db.rawQuery("SELECT * FROM " + USER_TRAITS, null);
         return cursor;
     }
 
