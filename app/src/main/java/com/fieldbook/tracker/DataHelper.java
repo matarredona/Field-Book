@@ -189,7 +189,7 @@ public class DataHelper {
             this.insertUserTraitsFromRemoteOrigin.bindString(5, dateFormatter.format(userTraitBean.getTimeTaken()));
             this.insertUserTraitsFromRemoteOrigin.bindString(6, userTraitBean.getPerson());
             this.insertUserTraitsFromRemoteOrigin.bindString(7, userTraitBean.getLocation());
-            this.insertUserTraitsFromRemoteOrigin.bindString(8, Integer.toString(userTraitBean.getRep()));
+            this.insertUserTraitsFromRemoteOrigin.bindString(8, userTraitBean.getRep());
             this.insertUserTraitsFromRemoteOrigin.bindString(9, userTraitBean.getNotes());
             this.insertUserTraitsFromRemoteOrigin.bindString(10, userTraitBean.getExp_id());
 
@@ -206,7 +206,7 @@ public class DataHelper {
             this.updateUserTraitsFromRemoteOrigin.bindString(5, dateFormatter.format(userTraitBean.getTimeTaken()));
             this.updateUserTraitsFromRemoteOrigin.bindString(6, userTraitBean.getPerson());
             this.updateUserTraitsFromRemoteOrigin.bindString(7, userTraitBean.getLocation());
-            this.updateUserTraitsFromRemoteOrigin.bindString(8, Integer.toString(userTraitBean.getRep()));
+            this.updateUserTraitsFromRemoteOrigin.bindString(8, userTraitBean.getRep());
             this.updateUserTraitsFromRemoteOrigin.bindString(9, userTraitBean.getNotes());
             this.updateUserTraitsFromRemoteOrigin.bindString(10, userTraitBean.getExp_id());
             this.updateUserTraitsFromRemoteOrigin.bindString(11, userTraitBean.getRid());

@@ -23,11 +23,11 @@ public class UserTraitBean {
     private Date timeTaken;
     private String person;
     private String location;
-    private int rep;
+    private String rep;
     private String notes;
     private String exp_id;
 
-    public UserTraitBean(String rid, String parent, String trait, String userValue, Date timeTaken, String person, String location, int rep, String notes, String exp_id) {
+    public UserTraitBean(String rid, String parent, String trait, String userValue, Date timeTaken, String person, String location, String rep, String notes, String exp_id) {
         this.rid = rid;
         this.parent = parent;
         this.trait = trait;
@@ -50,7 +50,7 @@ public class UserTraitBean {
         this.timeTaken = dateFormatter.parse(cursor.getString(cursor.getColumnIndex("timeTaken")));
         this.person = cursor.getString(cursor.getColumnIndex("person"));
         this.location = cursor.getString(cursor.getColumnIndex("location"));
-        this.rep = Integer.valueOf(cursor.getString(cursor.getColumnIndex("rep")));
+        this.rep = cursor.getString(cursor.getColumnIndex("rep"));
         this.notes = cursor.getString(cursor.getColumnIndex("notes"));
         this.exp_id = cursor.getString(cursor.getColumnIndex("exp_id"));
     }
@@ -65,7 +65,7 @@ public class UserTraitBean {
         this.timeTaken = dateFormatter.parse(json.getString("timeTaken"));
         this.person = json.getString("person");
         this.location = json.getString("location");
-        this.rep = Integer.valueOf(json.getString("rep"));
+        this.rep = json.getString("rep");
         this.notes = json.getString("notes");
         this.exp_id = json.getString("exp_id");
     }
@@ -87,9 +87,9 @@ public class UserTraitBean {
     }
 
     public boolean equals(UserTraitBean userTraitBean) {
-        if (this.getRid() == userTraitBean.getRid() &&
-                this.getParent() == userTraitBean.getParent() &&
-                this.timeTaken.equals(userTraitBean.getTimeTaken())) {
+        if (this.getRid().equals(userTraitBean.getRid()) &&
+                this.getParent().equals(userTraitBean.getParent()) &&
+                this.getTimeTaken().equals(userTraitBean.getTimeTaken())) {
             return true;
         } else {
             return false;
@@ -124,7 +124,7 @@ public class UserTraitBean {
         return location;
     }
 
-    public int getRep() {
+    public String getRep() {
         return rep;
     }
 

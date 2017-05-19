@@ -1431,7 +1431,8 @@ public class ConfigActivity extends AppCompatActivity {
 
     private String[] prepareSyncList() {
         String[] syncSettings = {
-                getString(R.string.syncurlpreference),
+                getString(R.string.syncurlendpointpreference),
+                getString(R.string.syncurltokenauthpreference),
                 getString(R.string.syncuserpreference),
                 getString(R.string.syncpasspreference),
                 getString(R.string.clearsettings)
@@ -1516,7 +1517,7 @@ public class ConfigActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (isAdditionalFieldsSpinnerTouched) {
                     String nameValue = additionalFieldsSpinner.getSelectedItem().toString();
-                    if (nameValue == getString(R.string.newcolumn) || nameValue == "") {
+                    if (nameValue.equals(getString(R.string.newcolumn)) || nameValue.equals("")) {
                         showSyncAdditionalFieldsDialog("", true);
                     } else {
                         showSyncAdditionalFieldsDialog(nameValue, false);
@@ -1548,23 +1549,29 @@ public class ConfigActivity extends AppCompatActivity {
                 switch (which) {
                     case 0:
                         showSyncSettingDialog(
-                                getString(R.string.syncurlpreference),
-                                getString(R.string.syncurldialogtitle)
+                                getString(R.string.syncurlendpointpreference),
+                                getString(R.string.syncurlendpointdialogtitle)
                         );
                         break;
                     case 1:
+                        showSyncSettingDialog(
+                                getString(R.string.syncurltokenauthpreference),
+                                getString(R.string.syncurltokenauthdialogtitle)
+                        );
+                        break;
+                    case 2:
                         showSyncSettingDialog(
                                 getString(R.string.syncuserpreference),
                                 getString(R.string.syncuserdialogtitle)
                         );
                         break;
-                    case 2:
+                    case 3:
                         showSyncSettingDialog(
                                 getString(R.string.syncpasspreference),
                                 getString(R.string.syncpassdialogtitle)
                         );
                         break;
-                    case 3:
+                    case 4:
                         showClearSettingsDialog();
                         break;
                 }
@@ -1637,7 +1644,7 @@ public class ConfigActivity extends AppCompatActivity {
             public void onClick(View arg0) {
                 String name = syncAdditionalColumnsName.getText().toString();
                 String value = syncAdditionalColumnsValue.getText().toString();
-                if (name != "" && value != "") {
+                if (!name.equals("") && !value.equals("")) {
                     String outputNameValue = name + ": " + value;
                     if (!isNew) {
                         getAdditionalFieldsSet().remove(inputNameValue);
@@ -2043,7 +2050,8 @@ public class ConfigActivity extends AppCompatActivity {
                 ed.putString("FirstName", "");
                 ed.putString("LastName", "");
                 ed.putString("Location", "");
-                ed.putString(getString(R.string.syncurlpreference), "");
+                ed.putString(getString(R.string.syncurlendpointpreference), "");
+                ed.putString(getString(R.string.syncurltokenauthpreference), "");
                 ed.putString(getString(R.string.syncuserpreference), "");
                 ed.putString(getString(R.string.syncpasspreference), "");
                 ed.putStringSet(getString(R.string.syncadditionalfieldspreference), null);
