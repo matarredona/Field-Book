@@ -27,11 +27,11 @@ import java.util.Map;
 
 public class ConnectionHelper {
 
-    private static String scheme;
-    private static String restUrl;
-    private static ArrayList<String> apiPath;
-    private static CookieManager cookieManager;
-    private static HashMap<String, String> defaultHeaders;
+    private String scheme;
+    private String restUrl;
+    private ArrayList<String> apiPath;
+    private CookieManager cookieManager;
+    private HashMap<String, String> defaultHeaders;
 
     private static final int CONNECTION_TIMEOUT = 10000;
     private static final int DATARETRIEVAL_TIMEOUT = 5000;
@@ -55,6 +55,7 @@ public class ConnectionHelper {
         }
         String[] path = url.split("/");
         this.restUrl = path[0];
+        String test = restUrl;
         this.apiPath = new ArrayList<String>();
         for (int i = 1; i < path.length; i++) {
             if (!path[i].equals("")) {
@@ -103,9 +104,11 @@ public class ConnectionHelper {
 
     private URL makeURL(List<String> path, HashMap<String, String> parameters, String requestMethod) {
         Uri.Builder builder = new Uri.Builder();
-        builder.scheme(scheme).authority(restUrl);
+        builder.scheme(scheme).encodedAuthority(restUrl);
         ArrayList<String> fullPath = new ArrayList<String>(apiPath);
-        fullPath.addAll(path);
+        if (path != null) {
+            fullPath.addAll(path);
+        }
         if (fullPath.size() != 0) {
             for (String p : fullPath) {
                 builder.appendPath(p);

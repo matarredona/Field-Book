@@ -260,7 +260,8 @@
     <!-- setup dialog -->
     <string name="datasyncsettingsdialogtitle">REST Syncronization settings</string>
 
-    <string name="syncurlpreference">REST-URL</string>
+    <string name="syncurlendpointpreference">REST-endpointURL</string>
+    <string name="syncurltokenauthpreference">REST-tokenAuthURL</string>
     <string name="syncuserpreference">REST-User</string>
     <string name="syncpasspreference">REST-Password</string>
     <string name="syncdownloadpreference">REST-downloadpath</string>
@@ -271,14 +272,15 @@
     <string name="synconlyactivepreference">REST-OnlyActive</string>
     <string name="syncadditionalfieldspreference">REST-AdditionalFields</string>
     <string name="syncadditionalfieldstitle">Additional register columns to upload</string>
-    <string name="syncadditionalfieldsname">Column name</string>
+    <string name="syncadditionalfieldsname">Key</string>
     <string name="syncadditionalfieldsvalue">Constant value</string>
     <string name="uniquenamepreference">ImportUniqueName</string>
     <string name="https">https</string>
     <string name="http">http</string>
     <string name="newcolumn">new</string>
 
-    <string name="syncurldialogtitle">Set REST URL</string>
+    <string name="syncurlendpointdialogtitle">Set REST endpoint URL</string>
+    <string name="syncurltokenauthdialogtitle">Set REST token authentication URL</string>
     <string name="syncuserdialogtitle">Set REST user</string>
     <string name="syncpassdialogtitle">Set REST password</string>
 

@@ -87,13 +87,9 @@ public class UserTraitBean {
     }
 
     public boolean equals(UserTraitBean userTraitBean) {
-        if (this.getRid().equals(userTraitBean.getRid()) &&
+        return this.getRid().equals(userTraitBean.getRid()) &&
                 this.getParent().equals(userTraitBean.getParent()) &&
-                this.getTimeTaken().equals(userTraitBean.getTimeTaken())) {
-            return true;
-        } else {
-            return false;
-        }
+                this.getTimeTaken().equals(userTraitBean.getTimeTaken());
     }
 
     public String getRid() {
